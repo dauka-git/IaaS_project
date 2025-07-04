@@ -103,7 +103,7 @@ export default function ApplicationFormPage() {
           ...values,
           customTimelineMonths: values.timeline === 'Flexible' ? flexibleMonths : undefined,
         };
-        const result = await iaasAPI.submitApplication(submitValues);
+        await iaasAPI.submitApplication(submitValues);
         setSuccessModalOpen(true);
       } catch (err: any) {
         setError(err.response?.data?.message || 'Failed to submit application');
