@@ -2,7 +2,7 @@
 import axios, { InternalAxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import { User, IaaSApplication, ApplicationFormData, ROIData, AuthResponse, PaginatedResponse } from '../interfaces';
 
-const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = 'https://iaas-project-server.onrender.com';
 
 // Create axios instance
 const api = axios.create({
