@@ -1,5 +1,5 @@
 {
-  "name": "quiz-app-frontend",
+  "name": "mastercard-iaas-frontend",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -9,12 +9,12 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "serve": "vite preview"
-
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
-    "@mui/material": "^7.0.2",
+    "@mui/material": "^6.4.12",
+    "@mui/icons-material": "^6.4.12",
     "@types/react-router-dom": "^5.3.3",
     "axios": "^1.9.0",
     "date-fns": "^4.1.0",
@@ -23,6 +23,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.5.3",
+    "recharts": "^2.12.0",
     "socket.io-client": "^4.8.1",
     "yup": "^1.6.1"
   },
@@ -39,4 +40,4 @@
     "typescript-eslint": "^8.26.1",
     "vite": "^6.3.1"
   }
-}
+} 

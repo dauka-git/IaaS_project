@@ -1,47 +1,55 @@
 import React, { createContext, useState, useEffect, useCallback } from 'react';
+import { User } from '../interfaces';
+import { authAPI } from '../utils/api';
 
 interface UserContextType {
   isAuthenticated: boolean;
-  userId: string | null;
-  login: (username: string, password: string) => Promise<void>;
+  user: User | null;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => void;
+  register: (userData: {
+    bin: string;
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    company?: string;
+    phone?: string;
+  }) => Promise<void>;
 }
 
 export const UserContext = createContext<UserContextType>({
   isAuthenticated: false,
-  userId: null,
+  user: null,
   login: async () => {},
+  logout: () => {},
+  register: async () => {},
 });
 
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
 
   const checkAuth = useCallback(async () => {
     const token = localStorage.getItem('token');
-    if (!token) {
+    const userData = localStorage.getItem('user');
+    
+    if (!token || !userData) {
       setIsAuthenticated(false);
-      setUserId(null);
+      setUser(null);
       return;
     }
 
     try {
-      const response = await fetch('/api/verify-token', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setIsAuthenticated(true);
-        setUserId(data.userId);
-      } else {
-        localStorage.removeItem('token');
-        setIsAuthenticated(false);
-        setUserId(null);
-      }
+      const userObj = JSON.parse(userData);
+      setUser(userObj);
+      setIsAuthenticated(true);
     } catch (err) {
-      console.error('Token verification failed:', err);
+      console.error('User data parsing failed:', err);
       localStorage.removeItem('token');
+      localStorage.removeItem('user');
       setIsAuthenticated(false);
-      setUserId(null);
+      setUser(null);
     }
   }, []);
 
@@ -49,24 +57,47 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     checkAuth();
   }, [checkAuth]);
 
-  const login = async (username: string, password: string) => {
-    const response = await fetch('/api/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
-    });
-    const data = await response.json();
-    if (response.ok && data.token) {
-      localStorage.setItem('token', data.token);
+  const login = async (email: string, password: string) => {
+    try {
+      const response = await authAPI.login({ email, password });
+      localStorage.setItem('token', response.token);
+      localStorage.setItem('user', JSON.stringify(response.user));
+      setUser(response.user);
       setIsAuthenticated(true);
-      setUserId(data.userId);
-    } else {
-      throw new Error(data.error || 'Login failed');
+    } catch (error) {
+      throw error;
     }
   };
 
+  const register = async (userData: {
+    bin: string;
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    company?: string;
+    phone?: string;
+  }) => {
+    try {
+      const response = await authAPI.register(userData);
+      localStorage.setItem('token', response.token);
+      localStorage.setItem('user', JSON.stringify(response.user));
+      setUser(response.user);
+      setIsAuthenticated(true);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const logout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUser(null);
+    setIsAuthenticated(false);
+  };
+
   return (
-    <UserContext.Provider value={{ isAuthenticated, userId, login }}>
+    <UserContext.Provider value={{ isAuthenticated, user, login, logout, register }}>
       {children}
     </UserContext.Provider>
   );

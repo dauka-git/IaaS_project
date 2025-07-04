@@ -4,8 +4,9 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const http = require('http');
 const { Server } = require('socket.io');
-const quizRoutes = require('./routes/QuizRoutes');
+const iaasRoutes = require('./routes/IaaSRoutes');
 const loginRoutes = require('./routes/LoginRoutes');
+const emailVerificationRoutes = require('./routes/EmailVerificationRoutes');
 
 const app = express();
 const server = http.createServer(app);
@@ -18,8 +19,9 @@ app.use(cors({
 }));
 
 app.use(express.json());
-app.use('/api', quizRoutes);
+app.use('/api', iaasRoutes);
 app.use('/api', loginRoutes);
+app.use('/api', emailVerificationRoutes);
 
 const io = new Server(server, {
   cors: {
@@ -45,10 +47,10 @@ mongoose.connect(process.env.MONGODB_URI, {
   console.error('MongoDB connection error:', err);
 });
 
-app.get('/health', (req, res) => res.send('Server is running'));
+app.get('/health', (req, res) => res.send('Mastercard IaaS Server is running'));
 
 server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Mastercard IaaS Server running on port ${PORT}`);
   console.log(`Socket.IO available at ws://localhost:${PORT}`);
 });
 

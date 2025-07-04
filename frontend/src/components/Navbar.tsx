@@ -1,12 +1,20 @@
-import { useNavigate } from 'react-router-dom';
-import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { AppBar, Toolbar, Typography, Button,} from '@mui/material';
+import { useUser } from './UserContext';
 
 const Navbar = () => {
+  const { user } = useUser();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleNavClick = (path: string) => {
     navigate(path);
   };
+
+  const userId = user?._id || user?.id;
+
+  // Only show Home and Dashboard on profile page
+  const isProfilePage = /^\/profile(\/[^/]+)?$/.test(location.pathname);
 
   return (
     <AppBar position="static">
@@ -16,12 +24,20 @@ const Navbar = () => {
             Home
           </Button>
         </Typography>
-        <Button color="inherit" onClick={() => handleNavClick('/profile')}>
-          Profile
-        </Button>
-        <Button color="inherit" onClick={() => handleNavClick('/register')}>
-          Sign Up
-        </Button>
+        {isProfilePage ? (
+          <Button color="inherit" onClick={() => handleNavClick(userId ? `/dashboard/${userId}` : '/dashboard')}>
+            Dashboard
+          </Button>
+        ) : (
+          <>
+            <Button color="inherit" onClick={() => handleNavClick(userId ? `/profile/${userId}` : '/login')}>
+              Profile
+            </Button>
+            <Button color="inherit" onClick={() => handleNavClick('/register')}>
+              Sign Up
+            </Button>
+          </>
+        )}
       </Toolbar>
     </AppBar>
   );

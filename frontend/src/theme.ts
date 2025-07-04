@@ -4,14 +4,17 @@ import { createTheme } from '@mui/material/styles';
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#1976d2',
+      main: '#000000',
+      actions: '#EB001B'
     },
     secondary: {
       main: '#dc004e',
+      headlines: '#1A1A1A',
+      text: '#4D4D4D'
     },
   },
   typography: {
-    fontFamily: 'Arial, sans-serif',
+    fontFamily: 'Helvetica Neue, sans-serif',
   },
 });
 

@@ -1,94 +1,170 @@
 const express = require('express');
-const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { User, Log } = require('../models/QuizModel');
-
+const User = require('../models/User');
+const zxcvbn = require('zxcvbn');
+const { PhoneNumberUtil } = require('google-libphonenumber');
+const validator = require('validator');
+const phoneUtil = PhoneNumberUtil.getInstance();
 const router = express.Router();
 
-// Register a new user
+// Register new user
 router.post('/register', async (req, res) => {
-  console.log('Received /register request:', req.body);
-
   try {
-    const { username, password, email, statistics } = req.body;
-    if (!username || !password || !email) {
-      return res.status(400).json({ error: 'All fields are required' });
+    const { bin, email, password, firstName, lastName, company, phone } = req.body;
+
+    // Email validation
+    if (!validator.isEmail(email)) {
+      return res.status(400).json({ message: 'Invalid email address.' });
     }
 
-    const existingUser = await User.findOne({ $or: [{ username }, { email }] });
+    // Phone validation (if provided)
+    if (phone) {
+      try {
+        const number = phoneUtil.parse(phone);
+        if (!phoneUtil.isValidNumber(number)) {
+          return res.status(400).json({ message: 'Invalid phone number.' });
+        }
+      } catch {
+        return res.status(400).json({ message: 'Invalid phone number.' });
+      }
+    }
+
+    // Password strength check
+    const passwordStrength = zxcvbn(password);
+    if (passwordStrength.score < 2) {
+      return res.status(400).json({ message: 'Password is too weak. Please choose a stronger password.' });
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ 
+      $or: [{ email }, { bin }] 
+    });
+    
     if (existingUser) {
-      return res.status(400).json({ error: 'Username or email already exists' });
+      return res.status(400).json({ 
+        message: 'User with this email or bin already exists' 
+      });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Create new user
     const user = new User({
-      username,
-      password: hashedPassword,
+      bin,
       email,
-      statistics: statistics || {
-        totalQuizzesTaken: 0,
-        totalScore: 0,
-        topicsLacking: [],
-      },
+      password,
+      firstName,
+      lastName,
+      company,
+      phone
     });
 
     await user.save();
-    await Log.create({ userId: user._id, action: 'registered', details: { username } });
 
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    res.status(201).json({ message: 'User registered', userId: user._id, token });
-  } catch (err) {
-    console.error('Registration error:', err);
-    res.status(500).json({ error: 'Failed to register user' });
-  }
-});
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
 
-router.post('/login', async (req, res) => {
-  console.log('Received /login request:', req.body);
-  const { username, password } = req.body;
-
-  if (!username || !password) {
-    return res.status(400).json({ error: 'Username and password are required' });
-  }
-
-  try {
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(401).json({ error: 'Invalid username or password' });
-    }
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({ error: 'Invalid username or password' });
-    }
-
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-
-    await Log.create({
-      userId: user._id,
-      action: 'login',
-      details: { username },
+    res.status(201).json({
+      message: 'User registered successfully',
+      token,
+      user: {
+        _id: user._id,
+        bin: user.bin,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        company: user.company,
+        role: user.role
+      }
     });
-
-    console.log('Login successful:', { userId: user._id, username });
-    res.json({ userId: user._id, token, message: 'Login successful' });
   } catch (error) {
-    console.error('Login error:', error.message, error.stack);
-    res.status(500).json({ error: 'Server error during login' });
+    console.error('Registration error:', error);
+    res.status(500).json({ message: 'Server error during registration' });
   }
 });
 
-router.get('/verify-token', async (req, res) => {
-  const token = req.headers.authorization?.replace('Bearer ', '');
-  if (!token) {
-    return res.status(401).json({ error: 'No token provided' });
-  }
-
+// Login user
+router.post('/login', async (req, res) => {
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    res.json({ userId: decoded.userId });
-  } catch (err) {
-    res.status(401).json({ error: 'Invalid token' });
+    const { email, password } = req.body;
+
+    // Find user by email
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    // Check password
+    const isPasswordValid = await user.comparePassword(password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    // Update last login
+    user.lastLogin = new Date();
+    await user.save();
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    res.json({
+      message: 'Login successful',
+      token,
+      user: {
+        _id: user._id,
+        bin: user.bin,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        company: user.company,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ message: 'Server error during login' });
+  }
+});
+
+// Get user profile
+router.get('/profile/:userId', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json(user);
+  } catch (error) {
+    console.error('Profile fetch error:', error);
+    res.status(500).json({ message: 'Server error fetching profile' });
+  }
+});
+
+// Update user profile
+router.put('/profile/:userId', async (req, res) => {
+  try {
+    const { firstName, lastName, company, phone } = req.body;
+    
+    const user = await User.findByIdAndUpdate(
+      req.params.userId,
+      { firstName, lastName, company, phone },
+      { new: true, runValidators: true }
+    ).select('-password');
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error('Profile update error:', error);
+    res.status(500).json({ message: 'Server error updating profile' });
   }
 });
 
