@@ -10,8 +10,7 @@ import {
   Container,
   Card,
   CardContent,
-  Grid,
-  Chip
+  Grid
 } from '@mui/material';
 import { 
   CreditCard as CreditCardIcon,

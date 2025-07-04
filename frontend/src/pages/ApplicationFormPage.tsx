@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Container,
   Paper,
@@ -34,6 +34,7 @@ import * as yup from 'yup';
 import { iaasAPI } from '../utils/api';
 import { useNavigate, useParams } from 'react-router-dom';
 import Slider from '@mui/material/Slider';
+import { ROIData } from '../interfaces';
 
 const validationSchema = yup.object({
   companyName: yup.string().required('Company name is required'),
