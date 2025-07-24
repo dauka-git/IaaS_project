@@ -1,4 +1,7 @@
 import { useState, useEffect } from 'react';
+import Snackbar from '@mui/material/Snackbar';
+import MuiAlert from '@mui/material/Alert';
+import IconButton from '@mui/material/IconButton';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../components/UserContext';
 import {
@@ -40,6 +43,7 @@ const RegisterPage = () => {
   const [isRegister, setIsRegister] = useState(true);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
   const [selectedCountry, setSelectedCountry] = useState('US');
   const phoneUtil = PhoneNumberUtil.getInstance();
@@ -75,7 +79,6 @@ const RegisterPage = () => {
   };
 
   const registerValidationSchema = Yup.object({
-    bin: Yup.string().required('BIN is required'),
     email: Yup.string()
       .required('Email is required')
       .test('is-valid-email', 'Invalid email', value => validator.isEmail(value || '')),
@@ -101,7 +104,6 @@ const RegisterPage = () => {
     try {
       if (isRegister) {
         await register({
-          bin: values.bin,
           email: values.email,
           password: values.password,
           firstName: values.firstName,
@@ -109,6 +111,7 @@ const RegisterPage = () => {
           company: values.company,
           phone: values.phone
         });
+        setSuccess(true);
       } else {
         await login(values.email, values.password);
       }
@@ -138,7 +141,6 @@ const RegisterPage = () => {
           )}
           <Formik
             initialValues={isRegister ? {
-              bin: '',
               email: '',
               password: '',
               firstName: '',
@@ -175,16 +177,6 @@ const RegisterPage = () => {
                       margin="normal"
                       error={touched.lastName && !!errors.lastName}
                       helperText={touched.lastName && errors.lastName}
-                    />
-                    <Field
-                      as={TextField}
-                      name="bin"
-                      label="BIN"
-                      variant="outlined"
-                      fullWidth
-                      margin="normal"
-                      error={touched.bin && !!errors.bin}
-                      helperText={touched.bin && errors.bin}
                     />
                     <Field
                       as={TextField}
@@ -282,7 +274,26 @@ const RegisterPage = () => {
           </Formik>
         </DialogContent>
       </Dialog>
-    </Box>
+    <Snackbar open={success} autoHideDuration={4000} onClose={() => setSuccess(false)} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
+      <MuiAlert onClose={() => setSuccess(false)} severity="success" sx={{ width: '100%' }}>
+        Registration successful! You can now sign in.
+      </MuiAlert>
+    </Snackbar>
+    <Snackbar open={success} anchorOrigin={{ vertical: 'top', horizontal: 'center' }} onClose={() => setSuccess(false)}>
+      <MuiAlert
+        onClose={() => setSuccess(false)}
+        severity="success"
+        sx={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+        action={
+          <IconButton color="inherit" size="small" onClick={() => { setSuccess(false); navigate('/'); }}>
+            Next
+          </IconButton>
+        }
+      >
+        Your registration is successful.
+      </MuiAlert>
+    </Snackbar>
+  </Box>
   );
 };
 

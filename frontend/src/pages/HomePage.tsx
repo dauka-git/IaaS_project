@@ -16,8 +16,11 @@ import {
   CreditCard as CreditCardIcon,
   TrendingUp as TrendingUpIcon,
   Speed as SpeedIcon,
-  Security as SecurityIcon
+  Security as SecurityIcon,
+  Padding
 } from '@mui/icons-material';
+
+import Navbar from '../components/Navbar';
 
 const HomePage = () => {
   const { isAuthenticated, user } = useUser();
@@ -47,42 +50,9 @@ const HomePage = () => {
 
   return (
     <div>
-      <AppBar position="static">
-        <Toolbar>
-          <Typography variant="h6" style={{ flexGrow: 1 }}>
-            <Button color="inherit" onClick={() => handleNavClick('/')}>
-              Mastercard IaaS
-            </Button>
-          </Typography>
-          
-          {isAuthenticated ? (
-            <>
-              <Button color="inherit" onClick={() => handleNavClick(user?._id ? `/dashboard/${user._id}` : '/dashboard')}>
-                Dashboard
-              </Button>
-              {user?.role === 'admin' && (
-                <Button color="inherit" onClick={() => handleNavClick('/admin')}>
-                  Admin
-                </Button>
-              )}
-              <Button color="inherit" onClick={() => handleNavClick(`/profile/${user?._id || user?.id}`)}>
-                Profile
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button color="inherit" onClick={goToLogin}>
-                Login
-              </Button>
-              <Button color="inherit" onClick={goToRegister}>
-                Sign Up
-              </Button>
-            </>
-          )}
-        </Toolbar>
-      </AppBar>
+      <Navbar/>
   
-      <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Container maxWidth="lg" sx={{ py: 10 }}>
         {/* Hero Section */}
         <Box
           sx={{

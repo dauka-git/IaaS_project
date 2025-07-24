@@ -1,9 +1,14 @@
 // frontend/vite.config.js
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite'
+
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    tailwindcss(),
+  ],
   server: {
     port: 5174, // Fix the port to 5173
     strictPort: true, // Fail if port 5173 is in use

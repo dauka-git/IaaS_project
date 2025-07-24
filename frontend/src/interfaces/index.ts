@@ -1,27 +1,10 @@
 // src/interfaces/index.ts
-export interface Question {
-    type: 'multiple_choice' | 'true_false' | 'matching' | 'short_answer';
-    subtype?: 'single' | 'multiple' | null;
-    text: string;
-    options?: string[];
-    matches?: { left: string; right: string }[];
-    correctAnswer: number | number[] | boolean | string | number[];
-    caseSensitive?: boolean;
-  }
+
   
-  export interface Quiz {
-    _id?: string;
-    title: string;
-    questions: Question[];
-    createdBy: string;
-    createdAt?: string;
-    userScores?: { userId: string; score: number; total: number; timestamp: string }[];
-  }
   
   export interface User {
     _id: string;
     id?: string;
-    bin: string;
     email: string;
     firstName: string;
     lastName: string;
@@ -33,7 +16,6 @@ export interface Question {
   }
   
   export interface ProfileStats {
-    bin: string;
   }
 
   export interface IaaSApplication {
@@ -55,22 +37,56 @@ export interface Question {
     updatedAt: string;
   }
 
+  ///---------ROI---------
+
   export interface ROIData {
-    estimatedSetupCost: number;
-    estimatedMonthlyCost: number;
-    inHouseSetupCost: number;
-    inHouseMonthlyCost: number;
-    annualSavings: number;
-    breakevenMonths: number;
-    threeYearROI: number;
-    costsRevenuesTimeline?: {
-      years: number;
-      transactions_per_year: number;
-      total_cost_iaas: number;
-      revenue_iaas: number;
-      net_iaas: number;
-    }[];
-  }
+    years: number[];
+  incomes: number[];
+  costs: {
+    in_house: number[];
+    iaas: number[];
+  };
+  net: {
+    in_house: number[];
+    iaas: number[];
+  };
+  roi: {
+    in_house: number[];
+    iaas: number[];
+  };
+}
+
+export interface AutoROIRequest {
+  years: number;
+  cards_number: number;
+  cardType: string;
+  features: string[];
+  starting_number: number;
+  expected_cards_growth_rate: number;
+}
+
+// Manual ROI calculation (for standalone ROI calculator)
+export interface ManualROIRequest {
+  explicit_cards_number: { [year: number]: number }; // {year: cards_number}
+  cardType: string;
+  features: string[];
+}
+
+export interface ROIrequest {
+  cards_number: number;
+  years: number;
+  cardType: string;
+  features: string[];
+  // Optional fields for auto ROI
+  starting_number?: number;
+  expected_cards_growth_rate?: number;
+  // Optional field for manual ROI
+  explicit_cards_number?: { [year: number]: number };
+}
+
+  
+
+  ///---------Contact Attempt---------
 
   export interface ContactAttempt {
     date: string;
@@ -78,22 +94,22 @@ export interface Question {
     notes: string;
   }
 
-  export interface ApplicationFormData {
-    companyName: string;
-    industry: string;
-    issuingCountry: string;
-    numberOfCardsIn5Years: number;
-    cardType: string;
-    expectedMonthlyVolume: number;
-    timeline: string;
-    features: string[];
-    ceoFirstName: string;
-    ceoLastName: string;
-    ceoIin: string;
-    cfoFirstName: string;
-    cfoLastName: string;
-    cfoIin: string;
-  }
+  // export interface ApplicationFormData {
+  //   companyName: string;
+  //   industry: string;
+  //   issuingCountry: string;
+  //   numberOfCardsIn5Years: number;
+  //   cardType: string;
+  //   expectedMonthlyVolume: number;
+  //   timeline: string;
+  //   features: string[];
+  //   ceoFirstName: string;
+  //   ceoLastName: string;
+  //   ceoIin: string;
+  //   cfoFirstName: string;
+  //   cfoLastName: string;
+  //   cfoIin: string;
+  // }
 
   export interface AuthResponse {
     message: string;
@@ -115,3 +131,12 @@ export interface Question {
       totalApplications: number;
     };
   }
+
+  export interface TypingTextProps {
+      words?: string[];
+      typingSpeed?: number;
+      deleteSpeed?: number;
+      delayBetweenWords?: number;
+    };
+
+  

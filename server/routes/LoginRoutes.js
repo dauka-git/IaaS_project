@@ -10,7 +10,7 @@ const router = express.Router();
 // Register new user
 router.post('/register', async (req, res) => {
   try {
-    const { bin, email, password, firstName, lastName, company, phone } = req.body;
+    const { email, password, firstName, lastName, company, phone } = req.body;
 
     // Email validation
     if (!validator.isEmail(email)) {
@@ -36,19 +36,15 @@ router.post('/register', async (req, res) => {
     }
 
     // Check if user already exists
-    const existingUser = await User.findOne({ 
-      $or: [{ email }, { bin }] 
-    });
-    
+    const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ 
-        message: 'User with this email or bin already exists' 
+        message: 'User with this email already exists' 
       });
     }
 
     // Create new user
     const user = new User({
-      bin,
       email,
       password,
       firstName,
@@ -71,7 +67,6 @@ router.post('/register', async (req, res) => {
       token,
       user: {
         _id: user._id,
-        bin: user.bin,
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,

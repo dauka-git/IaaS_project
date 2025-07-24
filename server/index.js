@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') });
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -7,6 +7,8 @@ const { Server } = require('socket.io');
 const iaasRoutes = require('./routes/IaaSRoutes');
 const loginRoutes = require('./routes/LoginRoutes');
 const emailVerificationRoutes = require('./routes/EmailVerificationRoutes');
+
+
 
 const app = express();
 const server = http.createServer(app);
@@ -38,6 +40,7 @@ io.on('connection', (socket) => {
   });
 });
 
+console.log('MONGODB_URI:', process.env.MONGODB_URI);
 mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,

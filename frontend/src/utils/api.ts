@@ -1,8 +1,12 @@
 // src/utils/api.ts
 import axios, { InternalAxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
-import { User, IaaSApplication, ApplicationFormData, ROIData, AuthResponse, PaginatedResponse } from '../interfaces';
+import { User, IaaSApplication, ROIData, AuthResponse, PaginatedResponse, AutoROIRequest, ManualROIRequest, ROIrequest } from '../interfaces';
 
-const API_BASE_URL = 'https://iaas-project-server.onrender.com';
+// import {ApplicationFormData } from '../interfaces';
+
+// const API_BASE_URL = 'https://iaas-project-server.onrender.com';
+
+const API_BASE_URL = 'http://localhost:5000'
 
 // Create axios instance
 const api = axios.create({
@@ -37,7 +41,6 @@ api.interceptors.response.use(
 // Auth API
 export const authAPI = {
   register: async (userData: {
-    bin: string;
     email: string;
     password: string;
     firstName: string;
@@ -45,7 +48,7 @@ export const authAPI = {
     company?: string;
     phone?: string;
   }): Promise<AuthResponse> => {
-    const response = await api.post('/register', userData);
+    const response = await api.post('/api/register', userData);
     return response.data;
   },
 
@@ -70,29 +73,50 @@ export const authAPI = {
   },
 };
 
+export const roiAPI = {
+  // Auto ROI calculation (for application form - default values)
+  calculateAutoROI: async (roiData: AutoROIRequest): Promise<{ roiData: ROIData }> => {
+    const response = await api.post('/api/roi/auto', roiData);
+    return response.data;
+  },
+
+  // Manual ROI calculation (for standalone calculator)
+  calculateManualROI: async (roiData: ManualROIRequest): Promise<{ roiData: ROIData }> => {
+    const response = await api.post('/api/roi/manual', roiData);
+    return response.data;
+  },
+
+  // Legacy endpoint for backward compatibility
+  calculateROI: async (applicationData: ROIrequest): Promise<{ roiData: ROIData }> => {
+    const response = await api.post('/api/calculate-roi', applicationData);
+    return response.data;
+  },
+};
+
 // IaaS Application API
 export const iaasAPI = {
-  submitApplication: async (applicationData: ApplicationFormData): Promise<{
+  submitApplication: async (applicationData: any): Promise<{
     message: string;
-    application: IaaSApplication;
+    application: any;
     roiData: ROIData;
   }> => {
+    // Accepts nested structure as in ApplicationFormPage
     const response = await api.post('/applications', applicationData);
     return response.data;
   },
 
-  getUserApplications: async (userId: string): Promise<IaaSApplication[]> => {
+  getUserApplications: async (userId: string): Promise<any[]> => {
     const response = await api.get(`/applications/user/${userId}`);
     return response.data;
   },
 
-  getApplication: async (applicationId: string): Promise<IaaSApplication> => {
+  getApplication: async (applicationId: string): Promise<any> => {
     const response = await api.get(`/applications/${applicationId}`);
     return response.data;
   },
 
-  calculateROI: async (applicationData: ApplicationFormData): Promise<{ roiData: ROIData }> => {
-    const response = await api.post('/calculate-roi', applicationData);
+  calculateROI: async (applicationData: ROIrequest): Promise<{ roiData: ROIData }> => {
+    const response = await api.post('/api/calculate-roi', applicationData);
     return response.data;
   },
 

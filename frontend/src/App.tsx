@@ -7,10 +7,12 @@ import HomePage from './pages/HomePage';
 import ApplicationFormPage from './pages/ApplicationFormPage';
 import DashboardPage from './pages/DashboardPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
-import LoginPage from './pages/LoginPage';
+import LoginPage from './pages/LoginPage'; 
+// import { StyledEngineProvider } from "@mui/material";
 
 const App: React.FC = () => {
   return (
+      
     <UserProvider>
       <Router>
         <Routes>
@@ -28,6 +30,7 @@ const App: React.FC = () => {
         </Routes>
       </Router>
     </UserProvider>
+
   );
 };
 
