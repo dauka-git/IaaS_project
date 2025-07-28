@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../components/UserContext';
+import Snackbar from '@mui/material/Snackbar';
+import MuiAlert from '@mui/material/Alert';
+import IconButton from '@mui/material/IconButton';
 import {
   Button,
   Box,
@@ -10,7 +13,9 @@ import {
   TextField,
   DialogActions,
   Typography,
-  Alert
+  Alert, 
+  CircularProgress,
+  
 } from '@mui/material';
 import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
@@ -20,16 +25,49 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
-  useEffect(() => {
+  const [redirectTimer, setRedirectTimer] = useState<NodeJS.Timeout | null>(null);
+
+
+
+  // useEffect(() => {
+  //   // if (isAuthenticated && user) {
+  //   //   const pendingPath = localStorage.getItem('pendingPath');
+  //   //   if (pendingPath) {
+  //   //     navigate(pendingPath);
+  //   //     localStorage.removeItem('pendingPath');
+  //   //   } else {
+  //   //     navigate(`/home/${user._id || user.id}`);
+  //   //   }
+  //   // }
+
+  //   if (isAuthenticated && user) {
+  //   const pendingPath = localStorage.getItem('pendingPath');
+  //   if (pendingPath) {
+  //     navigate(pendingPath);
+  //     localStorage.removeItem('pendingPath');
+  //   } else {
+  //     navigate('/'); // Redirect to main page instead of user-specific home
+  //   }
+  // }
+  // }, [isAuthenticated, user, navigate]);
+
+  // useEffect(() => {
+  //     return () => {
+  //       if (redirectTimer) clearTimeout(redirectTimer);
+  //     };
+  // }, [redirectTimer]);
+
+   useEffect(() => {
     if (isAuthenticated && user) {
-      const pendingPath = localStorage.getItem('pendingPath');
-      if (pendingPath) {
+      setSuccess(true); // Show success message
+      const timer = setTimeout(() => {
+        const pendingPath = localStorage.getItem('pendingPath') || '/';
         navigate(pendingPath);
         localStorage.removeItem('pendingPath');
-      } else {
-        navigate(`/home/${user._id || user.id}`);
-      }
+      }, 2000);
+      return () => clearTimeout(timer);
     }
   }, [isAuthenticated, user, navigate]);
 
@@ -38,7 +76,14 @@ const LoginPage = () => {
     setError('');
     try {
       await login(values.email, values.password);
-      // Navigation handled by useEffect
+
+      setSuccess(true)
+
+      const timer = setTimeout(() => {
+        navigate('/'); // Redirect to homepage
+      }, 2000);
+      setRedirectTimer(timer);
+
     } catch (err: any) {
       setError(err.response?.data?.message || err.message || 'Login failed');
     } finally {
@@ -106,6 +151,8 @@ const LoginPage = () => {
                     variant="contained"
                     color="primary"
                     disabled={loading}
+                    // onSubmit={handleLoginSubmit}
+                    startIcon={loading ? <CircularProgress size={20} /> : null}
                   >
                     {loading ? 'Processing...' : 'Sign In'}
                   </Button>
@@ -115,7 +162,40 @@ const LoginPage = () => {
           </Formik>
         </DialogContent>
       </Dialog>
+
+      <Snackbar 
+              open={success}
+              autoHideDuration={2000}
+              onClose={() => setSuccess(false)}
+              anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+          >
+            <MuiAlert
+              onClose={() => setSuccess(false)}
+              severity="success"
+              sx={{ width: '100%' }}
+            >
+              Login successful! Redirecting...
+            </MuiAlert>
+          </Snackbar>
+          {/* <Snackbar open={success} anchorOrigin={{ vertical: 'top', horizontal: 'center' }} onClose={() => setSuccess(false)}>
+            <MuiAlert
+              onClose={() => setSuccess(false)}
+              severity="success"
+              sx={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+              action={
+                <IconButton color="inherit" size="small" onClick={() => { setSuccess(false); navigate('/'); }}>
+                  Next
+                </IconButton>
+              }
+            >
+              Your Login is successful.
+            </MuiAlert>
+          </Snackbar> */}
+
+
     </Box>
+
+    
   );
 };
 

@@ -19,6 +19,8 @@ const callFastAPIAuto = async ({ years, cards_number, cardType, features, starti
   console.log(`[FastAPI Auto] Request #${fastApiRequestCount}:`, { years, cards_number, cardType, features, starting_number, expected_cards_growth_rate });
 
   try {
+    const startTime = Date.now();
+
     const res = await axios.post(`${FASTAPI_BASE_URL}/calculate-roi/auto`, {
       years,
       cards_number,
@@ -27,9 +29,22 @@ const callFastAPIAuto = async ({ years, cards_number, cardType, features, starti
       starting_number,
       expected_cards_growth_rate
     });
+
+    console.log(`FastAPI response received in ${Date.now() - startTime}ms`);
+    console.log('Response status:', res.status);
+    console.log('Response data:', res.data);
+
+
     return res.data;
   } catch (err) {
     console.error("FastAPI Auto call failed:", err.message);
+
+    console.error("Error message:", err.message);
+    if (err.response) {
+      console.error("Response status:", err.response.status);
+      console.error("Response data:", err.response.data);
+    }
+
     throw err;
   }
 };
@@ -269,15 +284,28 @@ const validateROIRequest = (body) => {
 // Auto ROI calculation endpoint
 router.post('/api/roi/auto', async (req, res) => {
   try {
-    console.log('Auto ROI Request received:', req.body);
+    console.log('====== STARTING AUTO ROI REQUEST ======');
+    console.log('Request headers:', req.headers);
+    console.log('Request body:', req.body);
+
+
+    // res.json({ roiData: {}, originalInputs: {} });
 
     const validation = validateAutoROIRequest(req.body);
     if (!validation.valid) {
+      console.log('Validation failed:', validation.error);
+
       return res.status(400).json({ error: validation.error });
     }
 
+    console.log('Calling FastAPI with validated data:', validation.data);
+
+
     const roiData = await callFastAPIAuto(validation.data);
     
+    console.log('Received ROI data from FastAPI:', roiData);
+
+
     return res.status(200).json({ 
       roiData,
       originalInputs: validation.data 
@@ -290,6 +318,9 @@ router.post('/api/roi/auto', async (req, res) => {
       message: 'Server error calculating Auto ROI',
       error: error.message 
     });
+  } finally {
+    console.log('====== AUTO ROI REQUEST COMPLETED ======');
+
   }
 });
 
@@ -387,46 +418,24 @@ router.post('/applications', authMiddleware, async (req, res) => {
     const applicationData = req.body;
     const userId = req.user.userId;
 
-    // Extract and validate ROI fields for FastAPI
-    const { years, volume, features = [], ...rest } = applicationData;
-    let parsedYears, cards_number, cardType;
-    if (volume) {
-      parsedYears = Number(years) || 5;
-      cards_number = Number(volume.cards_number);
-      cardType = volume.cardType;
-    } else {
-      parsedYears = Number(years) || 5;
-      cards_number = Number(applicationData.cards_number);
-      cardType = applicationData.cardType;
-    }
-    if (!Number.isInteger(parsedYears) || parsedYears <= 0) {
-      return res.status(400).json({ error: "Invalid or missing 'years'. Must be a positive integer." });
-    }
-    if (!Number.isInteger(cards_number) || cards_number <= 0) {
-      return res.status(400).json({ error: "Invalid or missing 'cards_number'. Must be a positive integer." });
-    }
-
-    // Call FastAPI with validated values
-    const roiData = await callFastAPI({
-      years: parsedYears,
-      cards_number,
-      cardType,
-      features
-    });
+  
 
     const application = new IaaSApplication({
       ...applicationData,
-      userId,
-      roiData
+      userId
     });
 
     await application.save();
 
+    console.log('application is successful')
+
     res.status(201).json({
       message: 'Application submitted successfully',
-      application,
-      roiData
+      application
+      // roiData
     });
+    console.log('application is successful!!!')
+
   } catch (error) {
     console.error('Application submission error:', error);
     res.status(500).json({ message: 'Server error submitting application' });

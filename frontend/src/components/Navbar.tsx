@@ -19,6 +19,9 @@ const Navbar = () => {
 
   const isHomePage = /^\/$|^\/index\.html$/i.test(location.pathname);
 
+  const isApplicationFormPage = /^\/apply(\/[a-f0-9]{24})?$/i.test(location.pathname);
+
+
 
   const handleNavClick = (path: string) => {
     if (path === '/') {
@@ -81,7 +84,7 @@ const Navbar = () => {
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
 
-          {isHomePage ? (
+          {isHomePage || isApplicationFormPage ? (
 
             isAuthenticated ? (
               <>

@@ -21,6 +21,8 @@ import {
 } from '@mui/icons-material';
 
 import Navbar from '../components/Navbar';
+import AnimatedLogo from '../components/AnimatedLogo';
+import BlockSpotlight from '../components/BlockSpotlight'
 
 const HomePage = () => {
   const { isAuthenticated, user } = useUser();
@@ -54,50 +56,59 @@ const HomePage = () => {
   
       <Container maxWidth="lg" sx={{ py: 10 }}>
         {/* Hero Section */}
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-            minHeight: '60vh',
-            textAlign: 'center',
-            gap: 4,
-          }}
-        >
-          <Typography variant="h2" component="h1" gutterBottom>
-            Mastercard Issuing-as-a-Service
-          </Typography>
-          <Typography variant="h5" color="text.secondary" sx={{ mb: 4, maxWidth: 600 }}>
-            Accelerate your card issuing program with our comprehensive IaaS solution. 
-            Reduce costs, speed up time-to-market, and focus on your core business.
-          </Typography>
-          
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
-            <Button
-              variant="contained"
-              size="large"
-              onClick={() => {
-                if (isAuthenticated && (user?._id || user?.id)) {
-                  handleNavClick(`/apply/${user._id || user.id}`);
-                } else {
-                  handleNavClick('/register');
-                }
-              }}
-              sx={{ fontSize: '18px', padding: '12px 24px' }}
-            >
-              Apply Now
-            </Button>
-            <Button
-              variant="outlined"
-              size="large"
-              onClick={() => handleNavClick(user?._id ? `/dashboard/${user._id}` : '/dashboard')}
-              sx={{ fontSize: '18px', padding: '12px 24px' }}
-            >
-              View Dashboard
-            </Button>
+        <Grid item xs={12} md={6}>
+          <Box 
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+              minHeight: '60vh',
+              textAlign: 'center',
+              gap: 4,
+            }}
+          >
+            {/* <Typography variant="h3" component="h1" gutterBottom>
+              Mastercard Issuing-as-a-Service
+            </Typography>
+            <Typography variant="h5" color="text.secondary" sx={{ mb: 4, maxWidth: 600 }}>
+              Accelerate your card issuing program with our comprehensive IaaS solution. 
+              Reduce costs, speed up time-to-market, and focus on your core business.
+            </Typography> */}
+
+            <BlockSpotlight
+                byline=''
+                mainText='Mastercard Issuing-as-a-Service'
+                secondaryText=' Accelerate your card issuing program with our comprehensive IaaS solution. 
+              Reduce costs, speed up time-to-market, and focus on your core business.'
+            />
+            
+            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
+              <Button
+                variant="contained"
+                size="large"
+                onClick={() => {
+                  if (isAuthenticated && (user?._id || user?.id)) {
+                    handleNavClick(`/apply/${user._id || user.id}`);
+                  } else {
+                    handleNavClick('/register');
+                  }
+                }}
+                sx={{ fontSize: '18px', padding: '12px 24px' }}
+              >
+                Apply Now
+              </Button>
+              <Button
+                variant="outlined"
+                size="large"
+                onClick={() => handleNavClick(user?._id ? `/dashboard/${user._id}` : '/dashboard')}
+                sx={{ fontSize: '18px', padding: '12px 24px' }}
+              >
+                View Dashboard
+              </Button>
+            </Box>
           </Box>
-        </Box>
+        </Grid>
 
         {/* Features Section */}
         <Box sx={{ py: 8 }}>
@@ -168,6 +179,8 @@ const HomePage = () => {
           </Grid>
         </Box>
 
+        <AnimatedLogo width={400}/>
+
         {/* ROI Calculator Preview */}
         <Box sx={{ py: 8, bgcolor: 'grey.50', borderRadius: 2, px: 4 }}>
           <Typography variant="h4" align="center" gutterBottom>
@@ -177,11 +190,15 @@ const HomePage = () => {
             See how much you can save with our IaaS solution compared to building in-house
           </Typography>
           
+
+          <Typography>
+            CHANGE IT
+          </Typography>
           <Box sx={{ display: 'flex', justifyContent: 'center' }}>
             <Button
               variant="contained"
               size="large"
-              onClick={() => handleNavClick('/apply')}
+              onClick={() => handleNavClick(`/apply/${user._id || user.id}`)}
               sx={{ fontSize: '18px', padding: '12px 24px' }}
             >
               Start ROI Calculator

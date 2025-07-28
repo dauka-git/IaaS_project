@@ -48,17 +48,25 @@ const RegisterPage = () => {
   const [selectedCountry, setSelectedCountry] = useState('US');
   const phoneUtil = PhoneNumberUtil.getInstance();
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      const pendingPath = localStorage.getItem('pendingPath');
-      if (pendingPath) {
-        navigate(pendingPath);
-        localStorage.removeItem('pendingPath');
-      } else {
-        navigate('/dashboard');
-      }
-    }
-  }, [isAuthenticated, navigate]);
+  const [redirectTimer, setRedirectTimer] = useState<NodeJS.Timeout | null>(null);
+
+ useEffect(() => {
+    return () => {
+      if (redirectTimer) clearTimeout(redirectTimer);
+    };
+  }, [redirectTimer]);
+
+  // useEffect(() => {
+  //   if (isAuthenticated) {
+  //     const pendingPath = localStorage.getItem('pendingPath');
+  //     if (pendingPath) {
+  //       navigate(pendingPath);
+  //       localStorage.removeItem('pendingPath');
+  //     } else {
+  //       navigate('/');
+  //     }
+  //   }
+  // }, [isAuthenticated, navigate]);
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>, setFieldValue: any) => {
     const value = e.target.value;
@@ -112,6 +120,12 @@ const RegisterPage = () => {
           phone: values.phone
         });
         setSuccess(true);
+
+        const timer = setTimeout(() => {
+          navigate('/'); // Redirect to homepage
+        }, 2000);
+        setRedirectTimer(timer);
+
       } else {
         await login(values.email, values.password);
       }
@@ -127,10 +141,10 @@ const RegisterPage = () => {
       <Dialog open={true} onClose={() => navigate('/')} maxWidth="sm" fullWidth>
         <DialogTitle>
           <Typography variant="h5" align="center">
-            {isRegister ? 'Create Account' : 'Sign In'}
+            {isRegister ? 'Create Account' : 'Login'}
           </Typography>
           <Typography variant="body2" align="center" color="text.secondary">
-            {isRegister ? 'Join Mastercard IaaS Platform' : 'Welcome back to Mastercard IaaS'}
+            {isRegister ? 'Join us' : 'Welcome back'}
           </Typography>
         </DialogTitle>
         <DialogContent>
@@ -254,6 +268,7 @@ const RegisterPage = () => {
                     onClick={() => {
                       setIsRegister(!isRegister);
                       setError('');
+                      navigate('/login')
                     }}
                     color="primary"
                     disabled={loading}
@@ -274,12 +289,21 @@ const RegisterPage = () => {
           </Formik>
         </DialogContent>
       </Dialog>
-    <Snackbar open={success} autoHideDuration={4000} onClose={() => setSuccess(false)} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
-      <MuiAlert onClose={() => setSuccess(false)} severity="success" sx={{ width: '100%' }}>
-        Registration successful! You can now sign in.
+    <Snackbar 
+        open={success}
+        autoHideDuration={2000}
+        onClose={() => setSuccess(false)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+    >
+      <MuiAlert
+        onClose={() => setSuccess(false)}
+        severity="success"
+        sx={{ width: '100%' }}
+      >
+        Registration successful! Redirecting...
       </MuiAlert>
     </Snackbar>
-    <Snackbar open={success} anchorOrigin={{ vertical: 'top', horizontal: 'center' }} onClose={() => setSuccess(false)}>
+    {/* <Snackbar open={success} anchorOrigin={{ vertical: 'top', horizontal: 'center' }} onClose={() => setSuccess(false)}>
       <MuiAlert
         onClose={() => setSuccess(false)}
         severity="success"
@@ -292,7 +316,7 @@ const RegisterPage = () => {
       >
         Your registration is successful.
       </MuiAlert>
-    </Snackbar>
+    </Snackbar> */}
   </Box>
   );
 };

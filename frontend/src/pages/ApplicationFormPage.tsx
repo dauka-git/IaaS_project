@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+
+import { useState } from 'react';
 import {
   Container,
   Paper,
@@ -14,48 +15,62 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Chip,
   Alert,
   CircularProgress,
-  Dialog
+  Dialog,
+  Card,
+  CardContent,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Stack,
+  Avatar, 
 } from '@mui/material';
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer
-} from 'recharts';
+  AttachMoney,
+  TrendingUp,
+  DateRange,
+  Calculate,
+  Margin
+} from '@mui/icons-material';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { iaasAPI } from '../utils/api';
 import { useNavigate, useParams } from 'react-router-dom';
-import Slider from '@mui/material/Slider';
-import { ROIData, ROIrequest } from '../interfaces';
+import ROICalculator from '../components/ROIcalculator';
+import Navbar from '../components/Navbar'
+
+// Mastercard color palette
+const mastercardColors = {
+  red: '#EB001B',
+  orange: '#FF5F00',
+  yellow: '#F79E1B',
+  gray: '#6C6C6C',
+  lightGray: '#F5F5F5',
+  darkGray: '#2C2C2C',
+  white: '#FFFFFF'
+};
 
 const validationSchema = Yup.object({
-   company: Yup.object({
+  company: Yup.object({
     name: Yup.string().required('Company name is required'),
     registrationNumber: Yup.string().required('Registration number (BIN) is required'),
     country: Yup.string().required('Country of incorporation is required'),
     address: Yup.string().required('Registered address is required'),
   }),
 
-  representative: Yup.object({}),
-
   contact: Yup.object({
     email: Yup.string()
       .email('Invalid business email format')
       .required('Business email is required'),
-    phone: Yup.string().required('Phone number is required'),
     website: Yup.string()
-      .url('Invalid URL')
       .required('Website is required'),
     industry: Yup.string()
-      .oneOf(['Bank', 'Fintech', 'Telecom', 'Retail', 'eCommerce', 'Other'])
+      .oneOf(['Banking', 'Fintech', 'Telecom', 'Retail', 'E-commerce', 'HR', 'Other'])
       .required('Industry is required'),
   }),
 
@@ -66,33 +81,15 @@ const validationSchema = Yup.object({
     targetUsers: Yup.string()
       .oneOf(['B2C', 'B2B', 'Internal Use', 'Mixed'])
       .required('Target audience is required'),
-    expectedVolume: Yup.number()
-      .typeError('Expected volume must be a number')
-      .min(1, 'Must be at least 1 card')
-      .required('Expected card volume is required'),
-    
   }),
-
-
   compliance: Yup.object({
     noSanctions: Yup.string()
-      .oneOf(['Confirmed', 'Not Confirmed'], 'This confirmation is required')
-      .required('This confirmation is required'),
-    consent: Yup.string()
-      .oneOf(['Consented', 'Not Consented'], 'Consent is required')
-      .required('Consent is required'),
+      .oneOf(['Sanctioned', 'Not sanctioned'])
+      .required('Sanctions status is required'),
   }),
-
-  volume: Yup.object({
-    cards_number: Yup.number().min(10000, 'Must be at least 10000').required('Number of cards is required'),
-    cardType: Yup.string().required('Card type is required'),
-    expectedMonthlyVolume: Yup.number().min(0, 'Must be 0 or greater').required('Monthly volume is required'),
-    timeline: Yup.string().required('Timeline is required'),
-  }),
-  
 });
 
-const steps = ['Basic Information', 'Card Requirements', 'Timeline & Features', 'ROI Analysis'];
+const steps = ['Basic Information', 'ROI Analysis', 'Confirmation'];
 
 const industryOptions = [
   'Fintech',
@@ -108,14 +105,16 @@ export default function ApplicationFormPage() {
   if (!userId) {
     return <Alert severity="error">Invalid access. Please log in and try again.</Alert>;
   }
+  
   const [activeStep, setActiveStep] = useState(0);
-  const [roiData, setRoiData] = useState<ROIData | null>(null);
   const [loading, setLoading] = useState(false);
-  const [roiLoading, setRoiLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const [successModalOpen, setSuccessModalOpen] = useState(false);
-  const [flexibleMonths, setFlexibleMonths] = useState(24);
+  const [roiData, setRoiData] = useState<any>(null);
+  const [roiInputs, setRoiInputs] = useState<any>(null);
+  // const [consented, setConsented] = useState(true);
+
 
   const formik = useFormik({
     initialValues: {
@@ -126,7 +125,7 @@ export default function ApplicationFormPage() {
         address: '',
         taxId: ''
       },
-      representative: {},
+      // representative: {},
       contact: {
         email: '',
         website: '',
@@ -135,29 +134,63 @@ export default function ApplicationFormPage() {
       businessPurpose: {
         useCase: '',
         targetUsers: '',
-        expectedVolume: ''
+        // expectedVolume: ''
       },
       compliance: {
-        noSanctions: '',
-        consent: ''
+        noSanctions: ''
       },
-      volume: {
-        cards_number: 10000,
-        cardType: '',
-        expectedMonthlyVolume: 0,
-        timeline: ''
-      },
-      features: [] // <-- add features to initialValues
+      
+      features: []
     },
     validationSchema,
     onSubmit: async (values) => {
+      console.log('Form submission started');
       setLoading(true);
       setError('');
       try {
-        // Use correct API method for submission
-        await iaasAPI.submitApplication(values);
+        // Combine all data including ROI results
+        
+        const applicationData = {
+          ...values,
+          // ROI inputs with proper structure
+          roiInputs: {
+            calculationType: roiInputs?.calculationType || 'auto',
+            cardType: roiInputs?.cardType || 'Virtual',
+            features: roiInputs?.features || [],
+            // Auto ROI fields (only if auto type)
+            ...(roiInputs?.calculationType === 'auto' && {
+              years: roiInputs.years,
+              cards_number: roiInputs.cards_number,
+              starting_number: roiInputs.starting_number,
+              expected_cards_growth_rate: roiInputs.expected_cards_growth_rate
+            }),
+            // Manual ROI fields (only if manual type)
+            ...(roiInputs?.calculationType === 'manual' && {
+              explicit_cards_number: roiInputs.explicit_cards_number
+            })
+          },
+          // ROI calculation results
+          roiResults: roiData ? {
+            years: roiData.years,
+            incomes: roiData.incomes,
+            costs: roiData.costs,
+            net: roiData.net,
+            roi: roiData.roi
+          } : null
+        };
+
+        console.log('Complete submission data:', applicationData); // Add this
+
+        
+        const response = await iaasAPI.submitApplication(applicationData);
+
+        console.log('API response:', response); // Add this
+
         setSuccessModalOpen(true);
+
+
       } catch (err: any) {
+        setSuccessModalOpen(true);
         setError(err.response?.data?.message || 'Failed to submit application');
       } finally {
         setLoading(false);
@@ -165,76 +198,7 @@ export default function ApplicationFormPage() {
     },
   });
 
-  function prepareROIRequest(
-    formikValues: typeof formik.values,
-  ): ROIrequest {
-
-    let years;
-    if (formik.values.volume.timeline === 'Flexible') {
-      years = Math.floor(flexibleMonths / 12);
-    } else {
-      years = 5;
-    }
-    
-    return {
-      cards_number: formikValues.volume.cards_number,
-      years: years,
-      cardType: formikValues.volume.cardType,
-      features: formikValues.features
-    };
-  }
-
-  const calculateROI = async () => {
-    setRoiLoading(true);
-    setError("");
-    setRoiData(null);
-
-    const roiRequest = prepareROIRequest(formik.values);
-
-    
-    if (formik.values.volume.cards_number >0) {
-      try {
-        const result = await iaasAPI.calculateROI({ roiRequest });
-        // Adapt FastAPI ROI result to recharts format
-        const roi = result.roiData;
-        // Build costsRevenuesTimeline for recharts
-        const costsRevenuesTimeline = roi.years.map((year, idx) => ({
-          year,
-          income: roi.incomes[idx],
-          total_cost_inhouse: roi.costs.in_house[idx],
-          total_cost_iaas: roi.costs.iaas[idx],
-          net_inhouse: roi.net.in_house[idx],
-          net_iaas: roi.net.iaas[idx],
-          roi_inhouse: roi.roi.in_house[idx],
-          roi_iaas: roi.roi.iaas[idx],
-        }));
-        setRoiData({ ...roi, costsRevenuesTimeline });
-      } catch (err) {
-        setError('Failed to calculate ROI');
-        setRoiData(null);
-      } finally {
-        setRoiLoading(false);
-      }
-    } else {
-      setRoiLoading(false);
-    }
-  };
-
-  // Only trigger ROI calculation when entering ROI Analysis step
-  useEffect(() => {
-    if (activeStep === 3) {
-      calculateROI();
-    }
-    // eslint-disable-next-line
-  }, [activeStep]);
-
   const handleNext = () => {
-    // If on Timeline & Features step, calculate ROI and go to ROI step
-    if (activeStep === 2) {
-      calculateROI();
-      setActiveStep((prevStep) => prevStep + 1);
-      return;
-    }
     setActiveStep((prevStep) => prevStep + 1);
   };
 
@@ -242,18 +206,85 @@ export default function ApplicationFormPage() {
     setActiveStep((prevStep) => prevStep - 1);
   };
 
-  const handleFeatureToggle = (feature: string) => {
-    const currentFeatures: string[] = formik.values.features || [];
-    const newFeatures = currentFeatures.includes(feature)
-      ? currentFeatures.filter((f: string) => f !== feature)
-      : [...currentFeatures, feature];
-    formik.setFieldValue('features', newFeatures);
+  const handleRoiData = (data: any, inputs: any) => {
+    console.log('ROI data received:', data);
+    console.log('ROI inputs received:', inputs);
+    setRoiData(data);
+    setRoiInputs(inputs);
+  };
+
+   const handleSubmit = async () => {
+    console.log('Submit button clicked - handleSubmit called');
+    
+    // Check if we have ROI data
+    if (!roiData) {
+      setError('Please complete the ROI analysis before submitting');
+      return;
+    }
+
+    // Trigger formik validation and submission
+    const errors = await formik.validateForm();
+    formik.setTouched({
+      company: {
+        name: true,
+        registrationNumber: true,
+        country: true,
+        address: true,
+      },
+      contact: {
+        email: true,
+        website: true,
+        industry: true,
+      },
+      businessPurpose: {
+        useCase: true,
+        targetUsers: true,
+      },
+      compliance: {
+        noSanctions: true,
+      },
+    });
+
+    if (Object.keys(errors).length === 0) {
+      console.log('No validation errors, submitting...');
+      formik.submitForm();
+    } else {
+      console.log('Validation errors:', errors);
+      setError('Please fill in all required fields in the Basic Information step');
+    }
+  };
+
+  const formatChartData = () => {
+    if (!roiData) return [];
+    
+    return roiData.years.map((year, index) => ({
+      year: `Year ${year}`,
+      income: roiData.incomes[index],
+      inHouseCost: roiData.costs.in_house[index],
+      iaasCost: roiData.costs.iaas[index],
+      inHouseNet: roiData.net.in_house[index],
+      iaasNet: roiData.net.iaas[index],
+      inHouseROI: roiData.roi.in_house[index],
+      iaasROI: roiData.roi.iaas[index]
+    }));
+  };
+
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount);
   };
 
   const renderStepContent = (step: number) => {
     switch (step) {
-      case 0:
+      case 0: // Basic Information
         return (
+          <div>
+          <Navbar/>
+
           <Grid container spacing={3}>
             {/* Company Section */}
             <Grid item xs={12} md={6}>
@@ -323,7 +354,7 @@ export default function ApplicationFormPage() {
                 helperText={formik.touched.contact?.website && formik.errors.contact?.website}
               />
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={4}>
               <FormControl fullWidth>
                 <InputLabel>Industry</InputLabel>
                 <Select
@@ -374,256 +405,337 @@ export default function ApplicationFormPage() {
                 </Select>
               </FormControl>
             </Grid>
+
             <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                type="number"
-                name="businessPurpose.expectedVolume"
-                label="Expected Card Volume"
-                value={formik.values.businessPurpose.expectedVolume}
-                onChange={formik.handleChange}
-                error={formik.touched.businessPurpose?.expectedVolume && Boolean(formik.errors.businessPurpose?.expectedVolume)}
-                helperText={formik.touched.businessPurpose?.expectedVolume && formik.errors.businessPurpose?.expectedVolume}
-              />
-            </Grid>
-            {/* Compliance Section */}
-            <Grid item xs={12} md={6}>
               <FormControl fullWidth>
-                <InputLabel>Sanctions Confirmation</InputLabel>
+                <InputLabel>Sanctions</InputLabel>
                 <Select
                   name="compliance.noSanctions"
                   value={formik.values.compliance.noSanctions}
                   onChange={formik.handleChange}
                   error={formik.touched.compliance?.noSanctions && Boolean(formik.errors.compliance?.noSanctions)}
                 >
-                  <MenuItem value="Confirmed">Confirmed</MenuItem>
-                  <MenuItem value="Not Confirmed">Not Confirmed</MenuItem>
+                  <MenuItem value="Sanctioned">Sanctioned</MenuItem>
+                  <MenuItem value="Not sanctioned">Not sanctioned</MenuItem>
+                  
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth>
-                <InputLabel>Consent</InputLabel>
-                <Select
-                  name="compliance.consent"
-                  value={formik.values.compliance.consent}
-                  onChange={formik.handleChange}
-                  error={formik.touched.compliance?.consent && Boolean(formik.errors.compliance?.consent)}
-                >
-                  <MenuItem value="Consented">Consented</MenuItem>
-                  <MenuItem value="Not Consented">Not Consented</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-          </Grid>
-        );
 
-      case 1:
-        return (
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                type="number"
-                name="volume.cards_number"
-                label="Number of Cards"
-                value={formik.values.volume.cards_number}
-                onChange={formik.handleChange}
-                error={formik.touched.volume?.cards_number && Boolean(formik.errors.volume?.cards_number)}
-                helperText={formik.touched.volume?.cards_number && formik.errors.volume?.cards_number}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth>
-                <InputLabel>Card Type</InputLabel>
-                <Select
-                  name="volume.cardType"
-                  value={formik.values.volume.cardType}
-                  onChange={formik.handleChange}
-                  error={formik.touched.volume?.cardType && Boolean(formik.errors.volume?.cardType)}
-                >
-                  <MenuItem value="Virtual">Virtual</MenuItem>
-                  <MenuItem value="Physical">Physical</MenuItem>
-                  <MenuItem value="Both">Both</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                type="number"
-                name="volume.expectedMonthlyVolume"
-                label="Expected Monthly Transaction Volume"
-                value={formik.values.volume.expectedMonthlyVolume}
-                onChange={formik.handleChange}
-                error={formik.touched.volume?.expectedMonthlyVolume && Boolean(formik.errors.volume?.expectedMonthlyVolume)}
-                helperText={formik.touched.volume?.expectedMonthlyVolume && formik.errors.volume?.expectedMonthlyVolume}
-              />
-            </Grid>
+           
           </Grid>
-        );
-
-      case 2:
-        return (
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth>
-                <InputLabel>Timeline</InputLabel>
-                <Select
-                  name="volume.timeline"
-                  value={formik.values.volume.timeline}
-                  onChange={e => {
-                    formik.handleChange(e);
-                    if (e.target.value === 'Flexible') {
-                      setFlexibleMonths(12); // default
-                      formik.setFieldValue('customTimelineMonths', 12);
-                    } else {
-                      formik.setFieldValue('customTimelineMonths', undefined);
-                    }
-                  }}
-                  error={formik.touched.volume?.timeline && Boolean(formik.errors.volume?.timeline)}
-                >
-                  <MenuItem value="Immediate">Immediate</MenuItem>
-                  <MenuItem value="3 months">3 months</MenuItem>
-                  <MenuItem value="6 months">6 months</MenuItem>
-                  <MenuItem value="12 months">12 months</MenuItem>
-                  <MenuItem value="Flexible">Flexible</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            {formik.values.volume.timeline === 'Flexible' && (
-              <Grid item xs={12} md={6}>
-                <Typography gutterBottom>Choose Timeline (months): {flexibleMonths}</Typography>
-                <Slider
-                  min={1}
-                  max={120}
-                  value={flexibleMonths}
-                  onChange={(_, val) => {
-                    setFlexibleMonths(val as number);
-                    formik.setFieldValue('customTimelineMonths', val);
-                  }}
-                  valueLabelDisplay="auto"
-                  marks={[
-                     {value: 24, label: '24'},  {value: 48, label: '48'}, {value: 72, label: '72'}, 
-                     {value: 96, label: '96'},  {value: 120, label: '120'}
-                    ]}
-                />
-              </Grid>
-            )}
-            <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom>
-                Additional Features
+          {/* <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              width: '100%',
+              mt: 3
+            }}
+          >
+           <Box  sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+              border : '1px solid #ccc',
+              borderRadius:2,
+              m:3, 
+              p:2,
+              maxWidth: '600px', // Add this line
+              width: '100%' 
+              }}>
+              <Typography variant="body1" sx={{ fontWeight: 500, pb:2 }}>
+                Confirm your permission to process personal information:
               </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                {['Rewards', 'FX', 'Corporate Controls', 'Analytics', 'API Integration', 'Custom Branding'].map((feature) => (
-                  <Chip
-                    key={feature}
-                    label={feature}
-                    onClick={() => handleFeatureToggle(feature)}
-                    color={formik.values.features.includes(feature) ? 'primary' : 'default'}
-                    variant={formik.values.features.includes(feature) ? 'filled' : 'outlined'}
-                  />
-                ))}
-              </Box>
-            </Grid>
-          </Grid>
+
+              <Button
+              onClick={ () =>{
+                const newValue = !consented
+                setConsented(newValue)
+                
+              }}
+              variant={consented ? "contained" : "outlined"}
+              color={consented ? "primary" : "secondary"}
+             
+              sx={consented ? {
+                      ml: 2,
+                      background: `linear-gradient(45deg, ${mastercardColors.red}, ${mastercardColors.orange})`,
+                      '&:hover': {
+                        background: `linear-gradient(45deg, ${mastercardColors.orange}, ${mastercardColors.red})`,
+                      },
+                      '&:disabled': {
+                        background: mastercardColors.gray,
+                      }
+                    } : { ml: 2 }}
+              >
+                    {consented ? 'I Agree' : 'I Disagree'}
+
+            </Button>
+          </Box>
+          </Box> */}
+          </div>
+        );
+      
+
+      case 1: // ROI Analysis
+        return (
+          <div>
+            <Box sx={{mb:4}}>
+              <Navbar />
+            </Box>
+            
+
+          <Box>
+            <Typography variant="h5" gutterBottom align="center" sx={{ mb: 3 }}>
+              Calculate Your ROI
+            </Typography>
+            <ROICalculator onCalculate={handleRoiData} />
+          </Box>
+          </div>
         );
 
-      case 3:
-        // Debug: log roiData and costsRevenuesTimeline
-        console.log('ROI DATA:', roiData);
-        if (roiData) console.log('TIMELINE:', roiData.costsRevenuesTimeline);
+      case 2: // Confirmation
         return (
           <Box>
-            {roiData && (
-              <Grid container spacing={3}>
-                <Grid item xs={12}>
-                  <Typography variant="h6" gutterBottom>
-                    ROI Analysis
-                  </Typography>
-                </Grid>
-                {/* New: Single Timeline Cost/Revenue/Net Chart (main) */}
-                {roiData.costsRevenuesTimeline && roiData.costsRevenuesTimeline.length > 0 && (
-                  <Grid item xs={12}>
-                    <Typography variant="subtitle1" gutterBottom>
-                      Projected Cost, Revenue, and Net Value ({
-                        formik.values.volume.timeline === 'Flexible'
-                          ? `${flexibleMonths} months`
-                          : formik.values.volume.timeline
-                      })
-                    </Typography>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <LineChart data={roiData.costsRevenuesTimeline}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="year" tickFormatter={y => `Year ${y}`} />
-                        <YAxis tickFormatter={v => `$${v.toLocaleString()}`}/>
-                        <Tooltip formatter={(value: number) => [`$${value.toLocaleString()}`]} />
-                        <Legend />
-                        <Line type="monotone" dataKey="income" name="Income" stroke="#82ca9d" strokeWidth={2} />
-                        <Line type="monotone" dataKey="total_cost_iaas" name="IaaS Cost" stroke="#8884d8" strokeWidth={2} />
-                        <Line type="monotone" dataKey="total_cost_inhouse" name="In-House Cost" stroke="#ffb347" strokeWidth={2} />
-                        <Line type="monotone" dataKey="net_iaas" name="IaaS Net" stroke="#ff7300" strokeWidth={2} />
-                        <Line type="monotone" dataKey="net_inhouse" name="In-House Net" stroke="#008000" strokeWidth={2} />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </Grid>
-                )}
+            
+            <Navbar/>
+            
+            {roiData ? (
+              <Box sx={{ mt: 4 }}>
                 {/* Summary Cards */}
-                <Grid item xs={12}>
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} md={3}>
-                      <Paper sx={{ p: 2, textAlign: 'center' }}>
-                        <Typography variant="h6" color="primary">
-                          {roiData.annualSavings != null ? `$${roiData.annualSavings.toLocaleString()}` : '-'}
-                        </Typography>
-                        <Typography variant="body2">Annual Savings</Typography>
-                      </Paper>
-                    </Grid>
-                    <Grid item xs={12} md={3}>
-                      <Paper sx={{ p: 2, textAlign: 'center' }}>
-                        <Typography variant="h6" color="primary">
-                          {roiData.costsRevenuesTimeline && roiData.costsRevenuesTimeline.length > 0 && roiData.costsRevenuesTimeline[roiData.costsRevenuesTimeline.length-1].revenue_iaas != null ? `$${roiData.costsRevenuesTimeline[roiData.costsRevenuesTimeline.length-1].revenue_iaas.toLocaleString()}` : '-'}
-                        </Typography>
-                        <Typography variant="body2">Total Income</Typography>
-                      </Paper>
-                    </Grid>
-                    <Grid item xs={12} md={3}>
-                      <Paper sx={{ p: 2, textAlign: 'center' }}>
-                        <Typography variant="h6" color="primary">
-                          {roiData.threeYearROI != null ? `${roiData.threeYearROI}%` : '-'}
-                        </Typography>
-                        <Typography variant="body2">
-                          {(() => {
-                            let months = 12;
-                            if (formik.values.volume.timeline === 'Flexible') {
-                              months = flexibleMonths;
-                            } else {
-                              const match = (formik.values.volume.timeline || '').match(/(\d+)/);
-                              if (match) months = parseInt(match[1], 10);
-                            }
-                            const years = months / 12;
-                            return `${years % 1 === 0 ? years : years.toFixed(1)}-Year ROI`;
-                          })()}
-                        </Typography>
-                      </Paper>
-                    </Grid>
-                    <Grid item xs={12} md={3}>
-                      <Paper sx={{ p: 2, textAlign: 'center' }}>
-                        <Typography variant="h6" color="primary">
-                          {roiData.estimatedSetupCost != null ? `$${roiData.estimatedSetupCost.toLocaleString()}` : '-'}
-                        </Typography>
-                        <Typography variant="body2">Setup Cost</Typography>
-                      </Paper>
-                    </Grid>
+                <Grid container spacing={3} mb={4}>
+                  <Grid item xs={12} md={4}>
+                    <Card 
+                      elevation={6}
+                      sx={{ 
+                        background: `linear-gradient(135deg, ${mastercardColors.red}, ${mastercardColors.orange})`,
+                        color: 'white',
+                        borderRadius: 3
+                      }}
+                    >
+                      <CardContent>
+                        <Stack direction="row" alignItems="center" spacing={2}>
+                          <AttachMoney sx={{ fontSize: 40 }} />
+                          <Box>
+                            <Typography variant="h6">Total Savings (IaaS)</Typography>
+                            <Typography variant="h4" fontWeight="bold">
+                              {formatCurrency(roiData.net.iaas.reduce((sum, val) => sum + val, 0)).replace('$', '')}
+                            </Typography>
+                          </Box>
+                        </Stack>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+
+                  <Grid item xs={12} md={4}>
+                    <Card 
+                      elevation={6}
+                      sx={{ 
+                        background: `linear-gradient(135deg, ${mastercardColors.orange}, ${mastercardColors.yellow})`,
+                        color: 'white',
+                        borderRadius: 3
+                      }}
+                    >
+                      <CardContent>
+                        <Stack direction="row" alignItems="center" spacing={2}>
+                          <TrendingUp sx={{ fontSize: 40 }} />
+                          <Box>
+                            <Typography variant="h6">Average ROI (IaaS)</Typography>
+                            <Typography variant="h4" fontWeight="bold">
+                              {(roiData.roi.iaas.reduce((sum, val) => sum + val, 0) / roiData.roi.iaas.length).toFixed(1)}%
+                            </Typography>
+                          </Box>
+                        </Stack>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+
+                  <Grid item xs={12} md={4}>
+                    <Card 
+                      elevation={6}
+                      sx={{ 
+                        background: `linear-gradient(135deg, ${mastercardColors.gray}, ${mastercardColors.darkGray})`,
+                        color: 'white',
+                        borderRadius: 3
+                      }}
+                    >
+                      <CardContent>
+                        <Stack direction="row" alignItems="center" spacing={2}>
+                          <DateRange sx={{ fontSize: 40 }} />
+                          <Box>
+                            <Typography variant="h6">Projection Period</Typography>
+                            <Typography variant="h4" fontWeight="bold">
+                              {roiData.years.length} Years
+                            </Typography>
+                          </Box>
+                        </Stack>
+                      </CardContent>
+                    </Card>
                   </Grid>
                 </Grid>
-              </Grid>
-            )}
-            {!roiData && (
-              <Box sx={{ textAlign: 'center', py: 4 }}>
-                <CircularProgress />
-                <Typography variant="body1" sx={{ mt: 2 }}>Loading ROI data...</Typography>
+
+                {/* Charts */}
+                <Grid container spacing={4} mb={4}>
+                  {/* Cost Comparison Chart */}
+                  <Grid item xs={12} lg={6}>
+                    <Card elevation={6} sx={{ borderRadius: 3 }}>
+                      <CardContent>
+                        <Typography variant="h6" gutterBottom sx={{ color: mastercardColors.darkGray }}>
+                          Cost Comparison
+                        </Typography>
+                        <ResponsiveContainer width="100%" height={350}>
+                          <BarChart data={formatChartData()}>
+                            <CartesianGrid strokeDasharray="3 3" stroke={mastercardColors.lightGray} />
+                            <XAxis dataKey="year" stroke={mastercardColors.gray} />
+                            <YAxis 
+                              tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`} 
+                              stroke={mastercardColors.gray}
+                            />
+                            <Tooltip 
+                              formatter={(value) => formatCurrency(value)}
+                              contentStyle={{
+                                backgroundColor: mastercardColors.white,
+                                border: `2px solid ${mastercardColors.lightGray}`,
+                                borderRadius: '8px'
+                              }}
+                            />
+                            <Legend />
+                            <Bar dataKey="inHouseCost" fill={mastercardColors.red} name="In-House Cost" />
+                            <Bar dataKey="iaasCost" fill={mastercardColors.orange} name="IaaS Cost" />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+
+                  {/* Net Income Chart */}
+                  <Grid item xs={12} lg={6}>
+                    <Card elevation={6} sx={{ borderRadius: 3 }}>
+                      <CardContent>
+                        <Typography variant="h6" gutterBottom sx={{ color: mastercardColors.darkGray }}>
+                          Net Income Comparison
+                        </Typography>
+                        <ResponsiveContainer width="100%" height={350}>
+                          <LineChart data={formatChartData()}>
+                            <CartesianGrid strokeDasharray="3 3" stroke={mastercardColors.lightGray} />
+                            <XAxis dataKey="year" stroke={mastercardColors.gray} />
+                            <YAxis 
+                              tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`}
+                              stroke={mastercardColors.gray}
+                            />
+                            <Tooltip 
+                              formatter={(value) => formatCurrency(value)}
+                              contentStyle={{
+                                backgroundColor: mastercardColors.white,
+                                border: `2px solid ${mastercardColors.lightGray}`,
+                                borderRadius: '8px'
+                              }}
+                            />
+                            <Legend />
+                            <Line 
+                              type="monotone" 
+                              dataKey="inHouseNet" 
+                              stroke={mastercardColors.red} 
+                              strokeWidth={4} 
+                              name="In-House Net" 
+                            />
+                            <Line 
+                              type="monotone" 
+                              dataKey="iaasNet" 
+                              stroke={mastercardColors.orange} 
+                              strokeWidth={4} 
+                              name="IaaS Net" 
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                </Grid>
+
+                {/* Detailed Table */}
+                <Card elevation={6} sx={{ borderRadius: 3, mb: 4 }}>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom sx={{ color: mastercardColors.darkGray }}>
+                      Detailed ROI Breakdown
+                    </Typography>
+                    <TableContainer component={Paper} elevation={0}>
+                      <Table>
+                        <TableHead>
+                          <TableRow sx={{ bgcolor: mastercardColors.lightGray }}>
+                            <TableCell sx={{ fontWeight: 'bold', color: mastercardColors.darkGray }}>Year</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', color: mastercardColors.darkGray }}>Income</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', color: mastercardColors.darkGray }}>In-House Cost</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', color: mastercardColors.darkGray }}>IaaS Cost</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', color: mastercardColors.darkGray }}>IaaS Net</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', color: mastercardColors.darkGray }}>IaaS ROI</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {formatChartData().map((row, index) => (
+                            <TableRow 
+                              key={index}
+                              sx={{ 
+                                '&:nth-of-type(odd)': { 
+                                  bgcolor: mastercardColors.lightGray + '40' 
+                                },
+                                '&:hover': {
+                                  bgcolor: mastercardColors.yellow + '20'
+                                }
+                              }}
+                            >
+                              <TableCell sx={{ fontWeight: 'bold' }}>{row.year}</TableCell>
+                              <TableCell>{formatCurrency(row.income)}</TableCell>
+                              <TableCell sx={{ color: mastercardColors.red }}>
+                                {formatCurrency(row.inHouseCost)}
+                              </TableCell>
+                              <TableCell sx={{ color: mastercardColors.orange }}>
+                                {formatCurrency(row.iaasCost)}
+                              </TableCell>
+                              <TableCell sx={{ color: mastercardColors.orange, fontWeight: 'bold' }}>
+                                {formatCurrency(row.iaasNet)}
+                              </TableCell>
+                              <TableCell sx={{ color: mastercardColors.red, fontWeight: 'bold' }}>
+                                {row.iaasROI.toFixed(1)}%
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </CardContent>
+                </Card>
+                
+                <Typography variant="body1" sx={{ textAlign: 'center', mb: 3 }}>
+                  Review your ROI analysis above. When ready, click "Submit Application" to finalize your submission.
+                </Typography>
               </Box>
+            ) : (
+              <Card elevation={6} sx={{ borderRadius: 3, py: 8, textAlign: 'center' }}>
+                <CardContent>
+                  <Calculate sx={{ fontSize: 64, color: mastercardColors.gray, mb: 2 }} />
+                  <Typography variant="h6" color="text.secondary" gutterBottom>
+                    No ROI Analysis Found
+                  </Typography>
+                  <Typography variant="body1" sx={{ mb: 3 }}>
+                    Please complete the ROI analysis in the previous step before submitting your application.
+                  </Typography>
+                  <Button 
+                    variant="outlined" 
+                    onClick={handleBack}
+                    sx={{ 
+                      borderColor: mastercardColors.red, 
+                      color: mastercardColors.red,
+                      '&:hover': {
+                        borderColor: mastercardColors.orange,
+                        bgcolor: mastercardColors.lightGray
+                      }
+                    }}
+                  >
+                    Go Back to ROI Analysis
+                  </Button>
+                </CardContent>
+              </Card>
             )}
           </Box>
         );
@@ -633,30 +745,14 @@ export default function ApplicationFormPage() {
     }
   };
 
-  // Add a helper to get required fields for each step
-  function isStepValid(step: number) {
-    // This function is not used for validation, but if needed, update to check nested fields
-    return true;
-  }
-
   const handleSuccessModalClose = () => {
     setSuccessModalOpen(false);
-    if (userId) {
-      navigate(`/dashboard/${userId}`);
-    } else {
-      // fallback: try to get user from localStorage
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
-      if (user && user._id) {
-        navigate(`/dashboard/${user._id}`);
-      } else {
-        navigate('/');
-      }
-    }
+    navigate(userId ? `/dashboard/${userId}` : '/');
   };
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Paper sx={{ p: 4 }}>
+    <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Paper sx={{ p: 4, mt:4 }}>
         <Typography variant="h4" gutterBottom align="center">
           Mastercard IaaS Application
         </Typography>
@@ -699,25 +795,47 @@ export default function ApplicationFormPage() {
           <Box>
             {activeStep === steps.length - 1 ? (
               <Button
+                type='submit'
                 variant="contained"
-                onClick={() => formik.handleSubmit()}
-                disabled={loading || roiLoading || !roiData}
+                onClick={
+                 handleSubmit
+                }
+                disabled={loading || !roiData}
                 startIcon={loading ? <CircularProgress size={20} /> : null}
+                sx={{
+                  background: `linear-gradient(45deg, ${mastercardColors.red}, ${mastercardColors.orange})`,
+                  '&:hover': {
+                    background: `linear-gradient(45deg, ${mastercardColors.orange}, ${mastercardColors.red})`,
+                  },
+                  '&:disabled': {
+                    background: mastercardColors.gray,
+                  },
+                }}
               >
-                {loading ? 'Submitting...' : roiLoading ? 'Calculating ROI...' : 'Submit Application'}
+                {loading ? 'Submitting...' : 'Submit Application'}
               </Button>
             ) : (
               <Button
                 variant="contained"
                 onClick={handleNext}
-                disabled={!isStepValid(activeStep)}
+                disabled={activeStep === 1 && !roiData}
+                sx={{
+                  background: `linear-gradient(45deg, ${mastercardColors.red}, ${mastercardColors.orange})`,
+                  '&:hover': {
+                    background: `linear-gradient(45deg, ${mastercardColors.orange}, ${mastercardColors.red})`,
+                  },
+                  '&:disabled': {
+                    background: mastercardColors.gray,
+                  },
+                }}
               >
-                {activeStep === 2 ? 'Apply' : 'Next'}
+                {activeStep === 1 ? 'Continue to Confirmation' : 'Next'}
               </Button>
             )}
           </Box>
         </Box>
       </Paper>
+      
       <Dialog open={successModalOpen} onClose={handleSuccessModalClose}>
         <Box p={3} textAlign="center">
           <Typography variant="h6" gutterBottom>Application submitted successfully!</Typography>

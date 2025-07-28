@@ -1,9 +1,27 @@
+
+
 "use client";
 import React from "react";
 import { Box, Typography } from "@mui/material";
 import { motion, useMotionTemplate, useMotionValue } from "framer-motion";
 
-const SpotlightCard = () => {
+interface SpotlightCardProps {
+  byline?: string;
+  mainText: string;
+  secondaryText: string;
+  bylineColor?: string;
+  mainTextColor?: string;
+  secondaryTextColor?: string;
+}
+
+const SpotlightCard = ({
+  byline,
+  mainText,
+  secondaryText,
+  bylineColor = "#1976d2",
+  mainTextColor = "white",
+  secondaryTextColor = "#888",
+}: SpotlightCardProps) => {
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
 
@@ -29,7 +47,7 @@ const SpotlightCard = () => {
         borderRadius: 4,
         border: "1px solid",
         borderColor: "divider",
-        bgcolor: "#111", // darker background for better effect
+        bgcolor: "#111",
         p: 8,
         boxShadow: 24,
         overflow: "hidden",
@@ -58,41 +76,24 @@ const SpotlightCard = () => {
       <Box>
         <Typography
           variant="subtitle1"
-          sx={{ fontWeight: "semibold", color: '#1976d2' }} // blue
+          sx={{ fontWeight: "semibold", color: bylineColor }}
         >
-          Byline
+          {byline}
         </Typography>
         <Box sx={{ mt: 2, display: "flex", alignItems: "center", gap: 2 }}>
-          <Typography variant="h2" sx={{ fontWeight: "bold", color: "white" }}>
-            Hero
+          <Typography variant="h2" sx={{ fontWeight: "bold", color: mainTextColor }}>
+            {mainText}
           </Typography>
         </Box>
         <Typography
           variant="body1"
-          sx={{ mt: 6, color: '#888' }} // grey
+          sx={{ mt: 6, color: secondaryTextColor }}
         >
-          Lorem ipsum dolor sit amet consectetur adipisicing elit, facilis illum
-          eum ullam nostrum atque quam.
+          {secondaryText}
         </Typography>
       </Box>
     </Box>
   );
 };
 
-export default function MuiSpotlightDemo() {
-  return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        bgcolor: "background.default",
-        p: 8,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <SpotlightCard />
-    </Box>
-  );
-}
+export default SpotlightCard

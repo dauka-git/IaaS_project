@@ -8,7 +8,7 @@ interface UserContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   register: (userData: {
-    bin: string;
+    
     email: string;
     password: string;
     firstName: string;
@@ -70,7 +70,6 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const register = async (userData: {
-    bin: string;
     email: string;
     password: string;
     firstName: string;

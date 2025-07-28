@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import {
   Box,
@@ -30,7 +31,7 @@ import {
   Divider
 } from '@mui/material';
 import {
-  Calculator,
+  Calculate,
   TrendingUp,
   AttachMoney,
   DateRange,
@@ -52,7 +53,11 @@ const mastercardColors = {
   white: '#FFFFFF'
 };
 
-const ROICalculator = () => {
+interface ROICalculatorProps {
+  onCalculate?: (results: any, inputs: any) => void;
+}
+
+const ROICalculator: React.FC<ROICalculatorProps> = ({ onCalculate }) => {
   const [calculationType, setCalculationType] = useState('auto');
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState(null);
@@ -139,11 +144,15 @@ const ROICalculator = () => {
     setResults(null);
 
     try {
+      // Use relative URLs instead of absolute localhost URLs
       const endpoint = calculationType === 'auto' 
-        ? 'http://localhost:5000/api/roi/auto'
-        : 'http://localhost:5000/api/roi/manual';
+        ? '/api/roi/auto'
+        : '/api/roi/manual';
       
       const payload = calculationType === 'auto' ? autoFormData : manualFormData;
+
+      console.log('Sending ROI calculation request to:', endpoint);
+      console.log('Request payload:', JSON.stringify(payload, null, 2));
 
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -153,16 +162,36 @@ const ROICalculator = () => {
         body: JSON.stringify(payload),
       });
 
+      console.log('Received response, status:', response.status);
+
+      const contentType = response.headers.get('content-type');
+      console.log('Content-Type header:', contentType);
+
+      if (!contentType || !contentType.includes('application/json')) {
+        const textResponse = await response.text();
+        console.error('Non-JSON response received:', textResponse.substring(0, 200));
+        throw new Error('Server returned non-JSON response');
+      }
+
       const data = await response.json();
+      console.log('Parsed JSON response:', data);
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to calculate ROI');
       }
 
       setResults(data.roiData);
+
+      if (onCalculate) {
+        onCalculate(data.roiData, payload);
+        console.log('Calling onCalculate with results and inputs');
+      }
+
     } catch (err) {
+      console.error('ROI calculation error:', err);
       setError(err.message);
     } finally {
+      console.log('Calculation complete');
       setLoading(false);
     }
   };
@@ -192,54 +221,12 @@ const ROICalculator = () => {
   };
 
   return (
-    <Box 
-      sx={{ 
-        minHeight: '100vh',
-        background: `linear-gradient(135deg, ${mastercardColors.lightGray} 0%, #E8E8E8 100%)`,
-        py: 4
-      }}
-    >
-      <Container maxWidth="xl">
-        {/* Header */}
-        <Box textAlign="center" mb={6}>
-          <Stack direction="row" alignItems="center" justifyContent="center" spacing={2} mb={3}>
-            <Avatar 
-              sx={{ 
-                bgcolor: mastercardColors.red, 
-                width: 64, 
-                height: 64 
-              }}
-            >
-              <Calculator sx={{ fontSize: 32 }} />
-            </Avatar>
-            <Typography 
-              variant="h2" 
-              component="h1" 
-              sx={{ 
-                fontWeight: 'bold',
-                background: `linear-gradient(45deg, ${mastercardColors.red}, ${mastercardColors.orange})`,
-                backgroundClip: 'text',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-              }}
-            >
-              ROI Calculator
-            </Typography>
-          </Stack>
-          <Typography 
-            variant="h5" 
-            color="text.secondary" 
-            sx={{ maxWidth: 800, mx: 'auto', mb: 2 }}
-          >
-            Calculate the return on investment for your card issuing solution with our advanced ROI calculator
-          </Typography>
-        </Box>
-
-        {/* Main Calculator Card */}
+    <Box sx={{ width: '100%', display: 'flex', gap: 4 }}>
+      {/* Left side - Forms */}
+      <Box sx={{ flex: 1 }}>
         <Card 
           elevation={8}
           sx={{ 
-            mb: 4,
             borderRadius: 3,
             background: 'linear-gradient(145deg, #ffffff 0%, #fafafa 100%)'
           }}
@@ -305,7 +292,7 @@ const ROICalculator = () => {
             {/* Auto ROI Form */}
             {calculationType === 'auto' && (
               <Grid container spacing={3} mb={4}>
-                <Grid item xs={12} md={6} lg={4}>
+                <Grid item xs={12} md={6}>
                   <TextField
                     fullWidth
                     label="Projection Years"
@@ -326,7 +313,7 @@ const ROICalculator = () => {
                   />
                 </Grid>
                 
-                <Grid item xs={12} md={6} lg={4}>
+                <Grid item xs={12} md={6}>
                   <TextField
                     fullWidth
                     label="Total Cards Target"
@@ -347,7 +334,7 @@ const ROICalculator = () => {
                   />
                 </Grid>
 
-                <Grid item xs={12} md={6} lg={4}>
+                <Grid item xs={12} md={6}>
                   <TextField
                     fullWidth
                     label="Starting Cards"
@@ -368,7 +355,7 @@ const ROICalculator = () => {
                   />
                 </Grid>
 
-                <Grid item xs={12} md={6} lg={4}>
+                <Grid item xs={12} md={6}>
                   <TextField
                     fullWidth
                     label="Growth Rate"
@@ -389,7 +376,7 @@ const ROICalculator = () => {
                   />
                 </Grid>
 
-                <Grid item xs={12} md={6} lg={4}>
+                <Grid item xs={12}>
                   <FormControl fullWidth>
                     <InputLabel 
                       sx={{ 
@@ -423,7 +410,7 @@ const ROICalculator = () => {
             {calculationType === 'manual' && (
               <Box mb={4}>
                 <Grid container spacing={3} mb={4}>
-                  <Grid item xs={12} md={6}>
+                  <Grid item xs={12}>
                     <FormControl fullWidth>
                       <InputLabel
                         sx={{ 
@@ -476,7 +463,7 @@ const ROICalculator = () => {
                     {Object.entries(manualFormData.explicit_cards_number)
                       .sort(([a], [b]) => parseInt(a) - parseInt(b))
                       .map(([year, cards]) => (
-                      <Grid item xs={12} sm={6} md={4} key={year}>
+                      <Grid item xs={12} key={year}>
                         <Stack direction="row" spacing={1} alignItems="center">
                           <Typography variant="body1" sx={{ minWidth: 60, color: mastercardColors.gray }}>
                             Year {year}:
@@ -550,7 +537,7 @@ const ROICalculator = () => {
                 disabled={loading}
                 variant="contained"
                 size="large"
-                startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <Calculator />}
+                startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <Calculate />}
                 sx={{
                   px: 6,
                   py: 2,
@@ -567,29 +554,31 @@ const ROICalculator = () => {
                 {loading ? 'Calculating...' : 'Calculate ROI'}
               </Button>
             </Box>
+
+            {/* Error Display */}
+            {error && (
+              <Alert 
+                severity="error" 
+                sx={{ 
+                  mt: 4,
+                  '& .MuiAlert-icon': {
+                    color: mastercardColors.red,
+                  },
+                }}
+              >
+                <strong>Error:</strong> {error}
+              </Alert>
+            )}
           </CardContent>
         </Card>
+      </Box>
 
-        {/* Error Display */}
-        {error && (
-          <Alert 
-            severity="error" 
-            sx={{ 
-              mb: 4,
-              '& .MuiAlert-icon': {
-                color: mastercardColors.red,
-              },
-            }}
-          >
-            <strong>Error:</strong> {error}
-          </Alert>
-        )}
-
-        {/* Results */}
-        {results && (
+      {/* Right side - Results */}
+      <Box sx={{ flex: 1 }}>
+        {results ? (
           <Box>
             {/* Summary Cards */}
-            <Grid container spacing={3} mb={4}>
+            <Grid container spacing={2} mb={3}>
               <Grid item xs={12} md={4}>
                 <Card 
                   elevation={6}
@@ -599,13 +588,13 @@ const ROICalculator = () => {
                     borderRadius: 3
                   }}
                 >
-                  <CardContent>
+                  <CardContent sx={{ p: 2 }}>
                     <Stack direction="row" alignItems="center" spacing={2}>
-                      <AttachMoney sx={{ fontSize: 40 }} />
+                      <AttachMoney sx={{ fontSize: 32 }} />
                       <Box>
-                        <Typography variant="h6">Total Savings (IaaS)</Typography>
-                        <Typography variant="h4" fontWeight="bold">
-                          {formatCurrency(results.net.iaas.reduce((sum, val) => sum + val, 0))}
+                        <Typography variant="subtitle2">Total Savings (IaaS)</Typography>
+                        <Typography variant="h5" fontWeight="bold">
+                          {formatCurrency(results.net.iaas.reduce((sum, val) => sum + val, 0)).replace('$', '')}
                         </Typography>
                       </Box>
                     </Stack>
@@ -622,12 +611,12 @@ const ROICalculator = () => {
                     borderRadius: 3
                   }}
                 >
-                  <CardContent>
+                  <CardContent sx={{ p: 2 }}>
                     <Stack direction="row" alignItems="center" spacing={2}>
-                      <TrendingUp sx={{ fontSize: 40 }} />
+                      <TrendingUp sx={{ fontSize: 32 }} />
                       <Box>
-                        <Typography variant="h6">Average ROI (IaaS)</Typography>
-                        <Typography variant="h4" fontWeight="bold">
+                        <Typography variant="subtitle2">Average ROI (IaaS)</Typography>
+                        <Typography variant="h5" fontWeight="bold">
                           {(results.roi.iaas.reduce((sum, val) => sum + val, 0) / results.roi.iaas.length).toFixed(1)}%
                         </Typography>
                       </Box>
@@ -645,12 +634,12 @@ const ROICalculator = () => {
                     borderRadius: 3
                   }}
                 >
-                  <CardContent>
+                  <CardContent sx={{ p: 2 }}>
                     <Stack direction="row" alignItems="center" spacing={2}>
-                      <DateRange sx={{ fontSize: 40 }} />
+                      <DateRange sx={{ fontSize: 32 }} />
                       <Box>
-                        <Typography variant="h6">Projection Period</Typography>
-                        <Typography variant="h4" fontWeight="bold">
+                        <Typography variant="subtitle2">Projection Period</Typography>
+                        <Typography variant="h5" fontWeight="bold">
                           {results.years.length} Years
                         </Typography>
                       </Box>
@@ -661,15 +650,15 @@ const ROICalculator = () => {
             </Grid>
 
             {/* Charts */}
-            <Grid container spacing={4} mb={4}>
+            <Grid container spacing={3} mb={3}>
               {/* Cost Comparison Chart */}
-              <Grid item xs={12} lg={6}>
+              <Grid item xs={12}>
                 <Card elevation={6} sx={{ borderRadius: 3 }}>
                   <CardContent>
                     <Typography variant="h6" gutterBottom sx={{ color: mastercardColors.darkGray }}>
                       Cost Comparison
                     </Typography>
-                    <ResponsiveContainer width="100%" height={350}>
+                    <ResponsiveContainer width="100%" height={300}>
                       <BarChart data={formatChartData()}>
                         <CartesianGrid strokeDasharray="3 3" stroke={mastercardColors.lightGray} />
                         <XAxis dataKey="year" stroke={mastercardColors.gray} />
@@ -695,13 +684,13 @@ const ROICalculator = () => {
               </Grid>
 
               {/* Net Income Chart */}
-              <Grid item xs={12} lg={6}>
+              <Grid item xs={12}>
                 <Card elevation={6} sx={{ borderRadius: 3 }}>
                   <CardContent>
                     <Typography variant="h6" gutterBottom sx={{ color: mastercardColors.darkGray }}>
                       Net Income Comparison
                     </Typography>
-                    <ResponsiveContainer width="100%" height={350}>
+                    <ResponsiveContainer width="100%" height={300}>
                       <LineChart data={formatChartData()}>
                         <CartesianGrid strokeDasharray="3 3" stroke={mastercardColors.lightGray} />
                         <XAxis dataKey="year" stroke={mastercardColors.gray} />
@@ -745,15 +734,14 @@ const ROICalculator = () => {
                 <Typography variant="h6" gutterBottom sx={{ color: mastercardColors.darkGray }}>
                   Detailed Breakdown
                 </Typography>
-                <TableContainer component={Paper} elevation={0}>
-                  <Table>
+                <TableContainer component={Paper} elevation={0} sx={{ maxHeight: 400 }}>
+                  <Table stickyHeader>
                     <TableHead>
                       <TableRow sx={{ bgcolor: mastercardColors.lightGray }}>
                         <TableCell sx={{ fontWeight: 'bold', color: mastercardColors.darkGray }}>Year</TableCell>
                         <TableCell sx={{ fontWeight: 'bold', color: mastercardColors.darkGray }}>Income</TableCell>
                         <TableCell sx={{ fontWeight: 'bold', color: mastercardColors.darkGray }}>In-House Cost</TableCell>
                         <TableCell sx={{ fontWeight: 'bold', color: mastercardColors.darkGray }}>IaaS Cost</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold', color: mastercardColors.darkGray }}>In-House Net</TableCell>
                         <TableCell sx={{ fontWeight: 'bold', color: mastercardColors.darkGray }}>IaaS Net</TableCell>
                         <TableCell sx={{ fontWeight: 'bold', color: mastercardColors.darkGray }}>IaaS ROI</TableCell>
                       </TableRow>
@@ -779,7 +767,6 @@ const ROICalculator = () => {
                           <TableCell sx={{ color: mastercardColors.orange }}>
                             {formatCurrency(row.iaasCost)}
                           </TableCell>
-                          <TableCell>{formatCurrency(row.inHouseNet)}</TableCell>
                           <TableCell sx={{ color: mastercardColors.orange, fontWeight: 'bold' }}>
                             {formatCurrency(row.iaasNet)}
                           </TableCell>
@@ -794,8 +781,20 @@ const ROICalculator = () => {
               </CardContent>
             </Card>
           </Box>
+        ) : (
+          <Card elevation={6} sx={{ borderRadius: 3, height: 'fit-content' }}>
+            <CardContent sx={{ textAlign: 'center', py: 8 }}>
+              <Calculate sx={{ fontSize: 64, color: mastercardColors.gray, mb: 2 }} />
+              <Typography variant="h6" color="text.secondary">
+                Calculate ROI to see results here
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                Fill in your parameters and click "Calculate ROI" to see detailed analysis and charts
+              </Typography>
+            </CardContent>
+          </Card>
         )}
-      </Container>
+      </Box>
     </Box>
   );
 };

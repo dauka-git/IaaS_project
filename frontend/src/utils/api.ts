@@ -53,7 +53,7 @@ export const authAPI = {
   },
 
   login: async (credentials: { email: string; password: string }): Promise<AuthResponse> => {
-    const response = await api.post('/login', credentials);
+    const response = await api.post('/api/login', credentials);
     return response.data;
   },
 
