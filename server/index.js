@@ -24,8 +24,8 @@ app.use(cors({
 
 app.use(express.json());
 app.use('/', iaasRoutes);
-app.use('/api', loginRoutes);
-app.use('/api', emailVerificationRoutes);
+app.use('/', loginRoutes);
+app.use('/', emailVerificationRoutes);
 
 const io = new Server(server, {
   cors: {
@@ -34,13 +34,13 @@ const io = new Server(server, {
   }
 });
 
-io.on('connection', (socket) => {
-  console.log('New client connected:', socket.id);
+// io.on('connection', (socket) => {
+//   console.log('New client connected:', socket.id);
 
-  socket.on('disconnect', () => {
-    console.log('Client disconnected:', socket.id);
-  });
-});
+//   socket.on('disconnect', () => {
+//     console.log('Client disconnected:', socket.id);
+//   });
+// });
 
 console.log('MONGODB_URI:', process.env.MONGODB_URI);
 mongoose.connect(process.env.MONGODB_URI, {

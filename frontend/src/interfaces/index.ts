@@ -1,7 +1,3 @@
-// src/interfaces/index.ts
-
-  
-  
   export interface User {
     _id: string;
     id?: string;
@@ -19,23 +15,45 @@
   }
 
   export interface IaaSApplication {
-    _id: string;
-    userId: string | User;
-    companyName: string;
-    industry: 'Fintech' | 'E-commerce' | 'Travel' | 'Healthcare' | 'Education' | 'Other';
-    issuingCountry: string;
-    numberOfCards: number;
-    cardType: 'Virtual' | 'Physical' | 'Both';
-    expectedMonthlyVolume: number;
-    timeline: 'Immediate' | '3 months' | '6 months' | '12 months' | 'Flexible';
+  _id: string;
+  userId: string | User;
+  company: {
+    name: string;
+    registrationNumber: string;
+    country: string;
+    address: string;
+    taxId?: string;
+  };
+  contact: {
+    email: string;
+    phone?: string;
+    website: string;
+    industry: string;
+  };
+  businessPurpose: {
+    useCase: string;
+    targetUsers: string;
+  };
+  compliance: {
+    noSanctions: string;
+  };
+  roiInputs: {
+    calculationType: 'auto' | 'manual';
+    years?: number;
+    cards_number?: number;
+    starting_number?: number;
+    expected_cards_growth_rate?: number;
+    explicit_cards_number?: { [year: number]: number };
+    cardType: string;
     features: string[];
-    roiData: ROIData;
-    status: 'Pending' | 'Under Review' | 'Approved' | 'Rejected' | 'Contacted';
-    adminNotes?: string;
-    contactAttempts: ContactAttempt[];
-    createdAt: string;
-    updatedAt: string;
-  }
+  };
+  roiResults?: ROIData;
+  status: 'Pending' | 'Under Review' | 'Approved' | 'Rejected' | 'Contacted';
+  adminNotes?: string;
+  contactAttempts: ContactAttempt[];
+  createdAt: string;
+  updatedAt: string;
+}
 
   ///---------ROI---------
 
@@ -94,22 +112,7 @@ export interface ROIrequest {
     notes: string;
   }
 
-  // export interface ApplicationFormData {
-  //   companyName: string;
-  //   industry: string;
-  //   issuingCountry: string;
-  //   numberOfCardsIn5Years: number;
-  //   cardType: string;
-  //   expectedMonthlyVolume: number;
-  //   timeline: string;
-  //   features: string[];
-  //   ceoFirstName: string;
-  //   ceoLastName: string;
-  //   ceoIin: string;
-  //   cfoFirstName: string;
-  //   cfoLastName: string;
-  //   cfoIin: string;
-  // }
+  
 
   export interface AuthResponse {
     message: string;
@@ -132,11 +135,5 @@ export interface ROIrequest {
     };
   }
 
-  export interface TypingTextProps {
-      words?: string[];
-      typingSpeed?: number;
-      deleteSpeed?: number;
-      delayBetweenWords?: number;
-    };
 
   

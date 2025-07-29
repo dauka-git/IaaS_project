@@ -48,12 +48,12 @@ export const authAPI = {
     company?: string;
     phone?: string;
   }): Promise<AuthResponse> => {
-    const response = await api.post('/api/register', userData);
+    const response = await api.post('/register', userData);
     return response.data;
   },
 
   login: async (credentials: { email: string; password: string }): Promise<AuthResponse> => {
-    const response = await api.post('/api/login', credentials);
+    const response = await api.post('/login', credentials);
     return response.data;
   },
 

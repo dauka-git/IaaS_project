@@ -233,10 +233,8 @@ const ROICalculator: React.FC<ROICalculatorProps> = ({ onCalculate }) => {
         >
           <CardContent sx={{ p: 4 }}>
             {/* Calculation Type Selector */}
-            <Box mb={4}>
-              <Typography variant="h6" gutterBottom sx={{ color: mastercardColors.darkGray }}>
-                Choose Calculation Method
-              </Typography>
+            <Box >
+              
               <ToggleButtonGroup
                 value={calculationType}
                 exclusive
@@ -260,9 +258,7 @@ const ROICalculator: React.FC<ROICalculatorProps> = ({ onCalculate }) => {
                 >
                   <AutoGraph sx={{ mb: 1 }} />
                   <Typography variant="h6">Automatic Growth Model</Typography>
-                  <Typography variant="body2" sx={{ mt: 1, opacity: 0.8 }}>
-                    Set growth parameters and let the system calculate card distribution over time
-                  </Typography>
+                  
                 </ToggleButton>
                 <ToggleButton 
                   value="manual"
@@ -280,9 +276,7 @@ const ROICalculator: React.FC<ROICalculatorProps> = ({ onCalculate }) => {
                 >
                   <EditCalendar sx={{ mb: 1 }} />
                   <Typography variant="h6">Manual Year-by-Year</Typography>
-                  <Typography variant="body2" sx={{ mt: 1, opacity: 0.8 }}>
-                    Manually specify the number of cards for each year
-                  </Typography>
+                  
                 </ToggleButton>
               </ToggleButtonGroup>
             </Box>
@@ -786,11 +780,9 @@ const ROICalculator: React.FC<ROICalculatorProps> = ({ onCalculate }) => {
             <CardContent sx={{ textAlign: 'center', py: 8 }}>
               <Calculate sx={{ fontSize: 64, color: mastercardColors.gray, mb: 2 }} />
               <Typography variant="h6" color="text.secondary">
-                Calculate ROI to see results here
+                See results here
               </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                Fill in your parameters and click "Calculate ROI" to see detailed analysis and charts
-              </Typography>
+              
             </CardContent>
           </Card>
         )}

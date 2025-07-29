@@ -1,4 +1,3 @@
-// src/components/MastercardIcon.jsx
 import { Box } from '@mui/material';
 
 const MastercardIcon = ({ width = 24, height = 24 }) => (

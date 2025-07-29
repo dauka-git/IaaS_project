@@ -5,12 +5,12 @@ const AnimatedLogo = ({ width = 300, height = 'auto', sx = {} }) => {
   return (
     <Box
       component="img"
-      src="/MasterCard Logo animation + Glass-effect Card.gif" // Path from public folder
+      src="/MasterCard Logo animation + Glass-effect Card.gif" 
       alt="MasterCard animated logo with glass effect"
       sx={{
         width: width,
         height: height,
-        ...sx  // Allows custom styling from parent
+        ...sx  
       }}
     />
   );

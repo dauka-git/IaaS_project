@@ -1,15 +1,29 @@
+
+
 import { motion, useAnimationControls } from "framer-motion";
 import { useEffect, useState } from "react";
 import { Box, Typography } from "@mui/material";
 
-import { TypingTextProps } from '../interfaces';
-
+interface TypingTextProps {
+  words?: string[];
+  typingSpeed?: number;
+  deleteSpeed?: number;
+  delayBetweenWords?: number;
+  variant?: "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "subtitle1" | "subtitle2" | "body1" | "body2";
+  color?: string;
+  fontFamily?: string;
+  sx?: object;
+  fixedHeight?: string;
+}
 
 function TypingText({
-  words = ["Hello", "World", "Typing", "Effect"],
+  words = ["Default", "Text"],
   typingSpeed = 150,
   deleteSpeed = 100,
   delayBetweenWords = 1000,
+  variant = "h4",
+  color = "text.primary",
+  fontFamily = "monospace"
 }: TypingTextProps) {
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [currentText, setCurrentText] = useState("");
@@ -18,6 +32,7 @@ function TypingText({
 
   useEffect(() => {
     const word = words[currentWordIndex];
+    let timer: NodeJS.Timeout;
 
     if (isDeleting) {
       if (currentText === "") {
@@ -26,32 +41,21 @@ function TypingText({
         return;
       }
 
-      const timer = setTimeout(() => {
+      timer = setTimeout(() => {
         setCurrentText(word.substring(0, currentText.length - 1));
       }, deleteSpeed);
-      return () => clearTimeout(timer);
-    }
-
-    if (currentText === word) {
-      const timer = setTimeout(() => {
+    } else if (currentText === word) {
+      timer = setTimeout(() => {
         setIsDeleting(true);
       }, delayBetweenWords);
-      return () => clearTimeout(timer);
+    } else {
+      timer = setTimeout(() => {
+        setCurrentText(word.substring(0, currentText.length + 1));
+      }, typingSpeed);
     }
 
-    const timer = setTimeout(() => {
-      setCurrentText(word.substring(0, currentText.length + 1));
-    }, typingSpeed);
     return () => clearTimeout(timer);
-  }, [
-    currentText,
-    currentWordIndex,
-    isDeleting,
-    words,
-    typingSpeed,
-    deleteSpeed,
-    delayBetweenWords,
-  ]);
+  }, [currentText, currentWordIndex, isDeleting, words, typingSpeed, deleteSpeed, delayBetweenWords]);
 
   useEffect(() => {
     controls.start({
@@ -65,32 +69,59 @@ function TypingText({
   }, [controls]);
 
   return (
-    <Box
+    <Typography
+      variant={variant}
       sx={{
-        width: "100%",
-        height: "100%",
+        fontFamily,
+        color,
         display: "flex",
         alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: "background.default",
+        minHeight: "1.5em" 
       }}
     >
-      <Typography
-        variant="h4"
-        sx={{
-          fontFamily: "monospace",
-          color: "text.primary",
-          display: "flex",
-          alignItems: "center",
-        }}
+      {currentText}
+      <motion.span 
+        animate={controls}
+        style={{ marginLeft: 4 }}
       >
-        {currentText}
-        <motion.span animate={controls}>|</motion.span>
-      </Typography>
-    </Box>
+        |
+      </motion.span>
+    </Typography>
   );
 }
 
-export default function TypingAnimatedText() {
-  return <TypingText />;
+interface TypingAnimatedTextProps extends TypingTextProps {
+  containerSx?: object;
+  sx?: object; 
+
+}
+
+export default function TypingAnimatedText({ 
+  fixedHeight = '4rem',
+  words = ["Mastercard", "Innovation", "Technology"],
+  containerSx = {},
+  sx ={},
+  ...props 
+}: TypingAnimatedTextProps) {
+  return (
+    <Box
+      sx={{
+        height: fixedHeight,
+        display: 'flex',
+        alignItems: 'center',
+        overflow: 'hidden',
+        ...containerSx
+      }}
+    >
+      <TypingText words={words} {...props}
+        sx={{
+          // width: "100%",
+          display: "flex",
+          alignItems: "center",
+          // justifyContent: "center",
+          ...sx
+        }}
+      />
+    </Box>
+  );
 }

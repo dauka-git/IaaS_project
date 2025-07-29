@@ -41,8 +41,9 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { iaasAPI } from '../utils/api';
 import { useNavigate, useParams } from 'react-router-dom';
-import ROICalculator from '../components/ROIcalculator';
+import ROICalculator from '../components/ROICalculator';
 import Navbar from '../components/Navbar'
+import { useUser } from '../components/UserContext';
 
 // Mastercard color palette
 const mastercardColors = {
@@ -114,7 +115,10 @@ export default function ApplicationFormPage() {
   const [roiData, setRoiData] = useState<any>(null);
   const [roiInputs, setRoiInputs] = useState<any>(null);
   // const [consented, setConsented] = useState(true);
-
+  const { isAuthenticated, user } = useUser();
+  
+  
+  const effectiveUserId = userId || user?._id;
 
   const formik = useFormik({
     initialValues: {
@@ -424,55 +428,7 @@ export default function ApplicationFormPage() {
 
            
           </Grid>
-          {/* <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'center',
-              width: '100%',
-              mt: 3
-            }}
-          >
-           <Box  sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              alignItems: 'center',
-              border : '1px solid #ccc',
-              borderRadius:2,
-              m:3, 
-              p:2,
-              maxWidth: '600px', // Add this line
-              width: '100%' 
-              }}>
-              <Typography variant="body1" sx={{ fontWeight: 500, pb:2 }}>
-                Confirm your permission to process personal information:
-              </Typography>
-
-              <Button
-              onClick={ () =>{
-                const newValue = !consented
-                setConsented(newValue)
-                
-              }}
-              variant={consented ? "contained" : "outlined"}
-              color={consented ? "primary" : "secondary"}
-             
-              sx={consented ? {
-                      ml: 2,
-                      background: `linear-gradient(45deg, ${mastercardColors.red}, ${mastercardColors.orange})`,
-                      '&:hover': {
-                        background: `linear-gradient(45deg, ${mastercardColors.orange}, ${mastercardColors.red})`,
-                      },
-                      '&:disabled': {
-                        background: mastercardColors.gray,
-                      }
-                    } : { ml: 2 }}
-              >
-                    {consented ? 'I Agree' : 'I Disagree'}
-
-            </Button>
-          </Box>
-          </Box> */}
+          
           </div>
         );
       
@@ -747,7 +703,7 @@ export default function ApplicationFormPage() {
 
   const handleSuccessModalClose = () => {
     setSuccessModalOpen(false);
-    navigate(userId ? `/dashboard/${userId}` : '/');
+    navigate(user?._id ? `/profile/${user._id}` : '/profile');
   };
 
   return (
@@ -780,6 +736,8 @@ export default function ApplicationFormPage() {
             <Button
               disabled={activeStep === 0}
               onClick={handleBack}
+              variant="outlined"
+
             >
               Back
             </Button>
@@ -836,7 +794,7 @@ export default function ApplicationFormPage() {
         </Box>
       </Paper>
       
-      <Dialog open={successModalOpen} onClose={handleSuccessModalClose}>
+      <Dialog open={successModalOpen} /*onClose={handleSuccessModalClose}*/>
         <Box p={3} textAlign="center">
           <Typography variant="h6" gutterBottom>Application submitted successfully!</Typography>
           <Button variant="contained" onClick={handleSuccessModalClose}>OK</Button>

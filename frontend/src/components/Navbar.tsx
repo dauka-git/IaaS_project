@@ -2,11 +2,10 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { AppBar, Toolbar,  Button, Box } from '@mui/material';
 import MastercardIcon from './McIcon';
 import { useUser } from './UserContext';
-// import <McIcon</McIcon>
 
 
 const Navbar = () => {
-  const { isAuthenticated, user } = useUser();
+  const { isAuthenticated, user, logout } = useUser();
   
   const navigate = useNavigate();
   const location = useLocation();
@@ -14,7 +13,6 @@ const Navbar = () => {
   
   const userId = user?._id || user?.id;
 
-  // Only show Home and Dashboard on profile page
   const isProfilePage = /^\/profile(\/[^/]+)?$/.test(location.pathname);
 
   const isHomePage = /^\/$|^\/index\.html$/i.test(location.pathname);
@@ -45,6 +43,20 @@ const Navbar = () => {
     navigate('/login');
   };
 
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+      logout();
+      navigate('/');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
+
+
   return (
     <AppBar sx={{
         
@@ -63,8 +75,8 @@ const Navbar = () => {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          py: 0.5,  // even less height
-          minHeight: 44, // set a minimum height for compactness
+          py: 0.5,  
+          minHeight: 44, 
           px: 2,   
           bgcolor: 'transparent',
           '@media (min-width:900px)': {  
@@ -88,42 +100,74 @@ const Navbar = () => {
 
             isAuthenticated ? (
               <>
-                <Button color="inherit" onClick={() => handleNavClick(user?._id ? `/dashboard/${user._id}` : '/dashboard')}>
-                  Dashboard
-                </Button>
+                
                 {user?.role === 'admin' && (
-                  <Button color="inherit" onClick={() => handleNavClick('/admin')}>
+                  <Button 
+                    sx={{ 
+                     
+                    fontSize: 14
+                    }}
+                    color="inherit" onClick={() => handleNavClick('/admin/dashboard')}
+                  >
                     Admin
                   </Button>
                 )}
-                <Button color="inherit" onClick={() => handleNavClick(`/profile/${user?._id || user?.id}`)}>
+                { !isProfilePage && (                <Button 
+                  sx={{ 
+                     
+                    fontSize: 14
+                  }}
+                  color="inherit" onClick={() => handleNavClick(`/profile/${user?._id || user?.id}`)}
+                >
                   Profile
                 </Button>
+                )}
               </>
             ) : (
               <>
-                <Button color="inherit" onClick={goToLogin}>
+                <Button
+                  sx={{ 
+                     
+                    fontSize: 14
+                  }}
+                  color="inherit" onClick={goToLogin}
+                >
                   Login
                 </Button>
-                <Button color="inherit" onClick={goToRegister}>
+                <Button
+                  sx={{ 
+                     
+                    fontSize: 14
+                  }}
+                  color="inherit" onClick={goToRegister}
+                >
                   Sign Up
                 </Button>
               </>
             )
 
           ): isProfilePage ? (
-            <Button color="inherit" onClick={() => handleNavClick(userId ? `/dashboard/${userId}` : '/dashboard')}>
-              Dashboard
-            </Button>
-          ) : (
             <>
-              <Button color="inherit" onClick={() => handleNavClick(userId ? `/profile/${userId}` : '/login')}>
-                Profile
-              </Button>
-              <Button color="inherit" onClick={() => handleNavClick('/register')}>
-                Sign Up
+              <Button 
+                sx={{ 
+                      
+                      fontSize: 14
+                    }}
+                color="inherit" onClick={handleLogout}
+              >
+                Log out
               </Button>
             </>
+          ) : (
+            isAuthenticated && (
+              <Button 
+                sx={{ fontSize: 14 }}
+                color="inherit" 
+                onClick={() => handleNavClick(`/profile/${userId}`)}
+              >
+                Profile
+              </Button>
+            )
           )}
 
         </Box>

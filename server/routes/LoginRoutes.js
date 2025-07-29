@@ -4,6 +4,7 @@ const User = require('../models/User');
 const zxcvbn = require('zxcvbn');
 const { PhoneNumberUtil } = require('google-libphonenumber');
 const validator = require('validator');
+const authMiddleware = require('./authMiddleware');
 const phoneUtil = PhoneNumberUtil.getInstance();
 const router = express.Router();
 
@@ -127,7 +128,7 @@ router.post('/login', async (req, res) => {
 });
 
 // Get user profile
-router.get('/profile/:userId', async (req, res) => {
+router.get('/profile/:userId', authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.params.userId).select('-password');
     if (!user) {
@@ -141,7 +142,7 @@ router.get('/profile/:userId', async (req, res) => {
 });
 
 // Update user profile
-router.put('/profile/:userId', async (req, res) => {
+router.put('/profile/:userId', authMiddleware, async (req, res) => {
   try {
     const { firstName, lastName, company, phone } = req.body;
     

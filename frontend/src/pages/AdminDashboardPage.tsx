@@ -36,6 +36,7 @@ import { useNavigate } from 'react-router-dom';
 import { iaasAPI } from '../utils/api';
 import { IaaSApplication, PaginatedResponse } from '../interfaces';
 import { useUser } from '../components/UserContext';
+import Navbar from '../components/Navbar';
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -94,7 +95,7 @@ export default function AdminDashboardPage() {
   };
 
   const handleViewApplication = (applicationId: string) => {
-    navigate(`/admin/application/${applicationId}`);
+    navigate(`/application/${applicationId}`);
   };
 
   const handleUpdateStatus = (application: IaaSApplication) => {
@@ -139,7 +140,10 @@ export default function AdminDashboardPage() {
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box sx={{ mb: 4 }}>
+
+      <Navbar />
+
+      <Box sx={{ mb: 4, mt:8 }}>
         <Typography variant="h4" gutterBottom>
           Admin Dashboard
         </Typography>
@@ -235,8 +239,6 @@ export default function AdminDashboardPage() {
                 <TableCell>Contact</TableCell>
                 <TableCell>Industry</TableCell>
                 <TableCell>Cards</TableCell>
-                <TableCell>Monthly Volume</TableCell>
-                <TableCell>Timeline</TableCell>
                 <TableCell>Status</TableCell>
                 <TableCell>Created</TableCell>
                 <TableCell>Actions</TableCell>
@@ -256,7 +258,7 @@ export default function AdminDashboardPage() {
                   const user = typeof application.userId === 'object' ? application.userId : null;
                   return (
                     <TableRow key={application._id}>
-                      <TableCell>{application.companyName}</TableCell>
+                      <TableCell>{application.company.name}</TableCell>
                       <TableCell>
                         {user && (
                           <Box>
@@ -269,10 +271,14 @@ export default function AdminDashboardPage() {
                           </Box>
                         )}
                       </TableCell>
-                      <TableCell>{application.industry}</TableCell>
-                      <TableCell>{application.numberOfCards.toLocaleString()}</TableCell>
-                      <TableCell>${application.expectedMonthlyVolume.toLocaleString()}</TableCell>
-                      <TableCell>{application.timeline}</TableCell>
+                      <TableCell>{application.contact.industry}</TableCell>
+                      <TableCell>
+  {application.roiInputs?.cards_number?.toLocaleString() || 
+   (application.roiInputs?.explicit_cards_number && 
+    Object.values(application.roiInputs.explicit_cards_number).slice(-1)[0]?.toLocaleString()) || 
+   'N/A'}
+</TableCell>
+                      
                       <TableCell>
                         <Chip
                           label={application.status}

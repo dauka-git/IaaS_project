@@ -1,18 +1,20 @@
 
-
 "use client";
 import React from "react";
 import { Box, Typography } from "@mui/material";
 import { motion, useMotionTemplate, useMotionValue } from "framer-motion";
+import TypingAnimatedText from "./TypingText";
 
 interface SpotlightCardProps {
   byline?: string;
-  mainText: string;
+  mainText: string | string[];
   secondaryText: string;
   bylineColor?: string;
   mainTextColor?: string;
   secondaryTextColor?: string;
 }
+
+
 
 const SpotlightCard = ({
   byline,
@@ -48,15 +50,18 @@ const SpotlightCard = ({
         border: "1px solid",
         borderColor: "divider",
         bgcolor: "#111",
-        p: 8,
+        p: 3,
+        pt:8,
+        pb:8,
         boxShadow: 24,
+        width: 600,
+        height: 400,
         overflow: "hidden",
         '&:hover .spotlight-overlay': {
           opacity: 1,
         },
       }}
     >
-      {/* Spotlight Overlay */}
       <Box
         component={motion.div}
         className="spotlight-overlay"
@@ -72,7 +77,6 @@ const SpotlightCard = ({
         style={{ background }}
       />
 
-      {/* Content */}
       <Box>
         <Typography
           variant="subtitle1"
@@ -80,10 +84,53 @@ const SpotlightCard = ({
         >
           {byline}
         </Typography>
-        <Box sx={{ mt: 2, display: "flex", alignItems: "center", gap: 2 }}>
-          <Typography variant="h2" sx={{ fontWeight: "bold", color: mainTextColor }}>
-            {mainText}
-          </Typography>
+        <Box sx={{  display: "flex", alignItems: "center", gap: 1 }}>
+          
+
+           {typeof mainText === 'string' ? (
+              <Typography 
+                sx={{ 
+                  fontWeight: "bold", 
+                  color: mainTextColor,
+                  fontSize: {
+                    xs: 14,    
+                    sm: 14,   
+                    md: 14,   
+                    lg: 16,    
+                    xl: 16    
+                  },
+                  
+                  lineHeight: 1.2
+                }}
+              >
+                {mainText}
+              </Typography>
+            ) : (
+              <TypingAnimatedText 
+                words={mainText}
+                variant="h4"
+                color={mainTextColor}
+                containerSx={{ 
+                  justifyContent: 'flex-start',
+                  width: 'auto',
+                  height: '100%'
+                }}
+                sx={{
+                   
+                   display: 'flex',
+                   alignItems: 'center',
+                  fontWeight: "bold",
+                  fontSize: {
+                    xs: 14,
+                    sm: 14,
+                    md: 14,
+                    lg: 16,
+                    xl: 16
+                  },
+                  lineHeight: 1.2
+                }}
+              />
+            )}
         </Box>
         <Typography
           variant="body1"
