@@ -159,13 +159,21 @@ const ROICalculator: React.FC<ROICalculatorProps> = ({ onCalculate }) => {
   };
 
   const toggleFeature = (feature: string, isAuto: boolean = true) => {
-    const setFormData = isAuto ? setAutoFormData : setManualFormData;
-    setFormData(prev => ({
-      ...prev,
-      features: prev.features.includes(feature)
-        ? prev.features.filter((f: string) => f !== feature)
-        : [...prev.features, feature]
-    }));
+    if (isAuto) {
+        setAutoFormData(prev => ({
+            ...prev,
+            features: prev.features.includes(feature)
+                ? prev.features.filter((f: string) => f !== feature)
+                : [...prev.features, feature]
+        }));
+    } else {
+        setManualFormData(prev => ({
+            ...prev,
+            features: prev.features.includes(feature)
+                ? prev.features.filter((f: string) => f !== feature)
+                : [...prev.features, feature]
+        }));
+    }
   };
 
   const calculateROI = async () => {
@@ -250,7 +258,7 @@ const ROICalculator: React.FC<ROICalculatorProps> = ({ onCalculate }) => {
               <ToggleButtonGroup
                 value={calculationType}
                 exclusive
-                onChange={(e, value) => value && setCalculationType(value as CalculationType)}
+                onChange={(_, value) => value && setCalculationType(value as CalculationType)}
                 fullWidth
                 sx={{ mb: 3 }}
               >
@@ -468,39 +476,42 @@ const ROICalculator: React.FC<ROICalculatorProps> = ({ onCalculate }) => {
                   <Grid container spacing={2}>
                     {Object.entries(manualFormData.explicit_cards_number)
                       .sort(([a], [b]) => parseInt(a) - parseInt(b))
-                      .map(([year, cards]) => (
-                      <Grid item xs={12} key={year}>
-                        <Stack direction="row" spacing={1} alignItems="center">
-                          <Typography variant="body1" sx={{ minWidth: 60, color: mastercardColors.gray }}>
-                            Year {year}:
-                          </Typography>
-                          <TextField
-                            size="small"
-                            type="number"
-                            value={cards}
-                            onChange={(e) => handleManualCardsChange(year, e.target.value)}
-                            inputProps={{ min: 0 }}
-                            sx={{
-                              flex: 1,
-                              '& .MuiOutlinedInput-root': {
-                                '&.Mui-focused fieldset': {
-                                  borderColor: mastercardColors.orange,
-                                },
-                              },
-                            }}
-                          />
-                          {Object.keys(manualFormData.explicit_cards_number).length > 1 && (
-                            <IconButton
-                              onClick={() => removeManualYear(year)}
-                              size="small"
-                              sx={{ color: mastercardColors.red }}
-                            >
-                              <Remove />
-                            </IconButton>
-                          )}
-                        </Stack>
-                      </Grid>
-                    ))}
+                      .map(([yearStr, cards]) => {
+                        const year = parseInt(yearStr);
+                        return (
+                          <Grid item xs={12} key={year}>
+                            <Stack direction="row" spacing={1} alignItems="center">
+                              <Typography variant="body1" sx={{ minWidth: 60, color: mastercardColors.gray }}>
+                                Year {year}:
+                              </Typography>
+                              <TextField
+                                size="small"
+                                type="number"
+                                value={cards}
+                                onChange={(e) => handleManualCardsChange(year, e.target.value)}
+                                inputProps={{ min: 0 }}
+                                sx={{
+                                  flex: 1,
+                                  '& .MuiOutlinedInput-root': {
+                                    '&.Mui-focused fieldset': {
+                                      borderColor: mastercardColors.orange,
+                                    },
+                                  },
+                                }}
+                              />
+                              {Object.keys(manualFormData.explicit_cards_number).length > 1 && (
+                                <IconButton
+                                  onClick={() => removeManualYear(year)}
+                                  size="small"
+                                  sx={{ color: mastercardColors.red }}
+                                >
+                                  <Remove />
+                                </IconButton>
+                              )}
+                            </Stack>
+                          </Grid>
+                        );
+                    })}
                   </Grid>
                 </Box>
               </Box>

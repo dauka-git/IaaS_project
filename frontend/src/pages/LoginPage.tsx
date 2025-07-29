@@ -75,7 +75,7 @@ const LoginPage = () => {
 
       setSuccess(true)
 
-      const timer = setTimeout(() => {
+      setTimeout(() => {
         navigate('/'); // Redirect to homepage
       }, 2000);
 
@@ -172,20 +172,7 @@ const LoginPage = () => {
               Login successful! Redirecting...
             </MuiAlert>
           </Snackbar>
-          {/* <Snackbar open={success} anchorOrigin={{ vertical: 'top', horizontal: 'center' }} onClose={() => setSuccess(false)}>
-            <MuiAlert
-              onClose={() => setSuccess(false)}
-              severity="success"
-              sx={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-              action={
-                <IconButton color="inherit" size="small" onClick={() => { setSuccess(false); navigate('/'); }}>
-                  Next
-                </IconButton>
-              }
-            >
-              Your Login is successful.
-            </MuiAlert>
-          </Snackbar> */}
+          
 
 
     </Box>
