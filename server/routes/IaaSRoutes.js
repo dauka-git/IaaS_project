@@ -7,7 +7,7 @@ const router = express.Router();
 ///ex fastapiClient file
 const axios = require("axios");
 
-const FASTAPI_BASE_URL = "http://localhost:8000";
+const FASTAPI_BASE_URL = process.env.PYTHON_MICROSERVICE_URL || "http://localhost:8000";
 
 
 // Global counter for FastAPI requests
