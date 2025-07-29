@@ -23,6 +23,15 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
+// Add root route for debugging
+app.get('/', (req, res) => {
+  res.json({
+    message: 'Mastercard IaaS Server is running',
+    endpoints: ['/register', '/login', '/health', '/applications']
+  });
+});
+
 app.use('/', iaasRoutes);
 app.use('/', loginRoutes);
 app.use('/', emailVerificationRoutes);
@@ -42,8 +51,16 @@ const io = new Server(server, {
 //   });
 // });
 
-console.log('MONGODB_URI:', process.env.MONGODB_URI);
-mongoose.connect(process.env.MONGODB_URI, {
+console.log('MONGO_URI:', process.env.MONGO_URI);
+console.log('FRONTEND_URL:', process.env.FRONTEND_URL);
+console.log('JWT_SECRET:', process.env.JWT_SECRET ? 'SET' : 'NOT SET');
+console.log('PYTHON_MICROSERVICE_URL:', process.env.PYTHON_MICROSERVICE_URL);
+
+if (!process.env.MONGO_URI) {
+  console.error('MONGO_URI is not set! Server will not start properly.');
+}
+
+mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 }).then(() => {
