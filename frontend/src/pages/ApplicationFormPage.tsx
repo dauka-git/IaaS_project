@@ -27,14 +27,14 @@ import {
   TableHead,
   TableRow,
   Stack,
-  Avatar, 
+  // Avatar, 
 } from '@mui/material';
 import {
   AttachMoney,
   TrendingUp,
   DateRange,
   Calculate,
-  Margin
+  // Margin
 } from '@mui/icons-material';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { useFormik } from 'formik';
@@ -101,6 +101,23 @@ const industryOptions = [
   'Other',
 ];
 
+type ROIResults = {
+  years: number[];
+  incomes: number[];
+  costs: {
+    in_house: number[];
+    iaas: number[];
+  };
+  net: {
+    in_house: number[];
+    iaas: number[];
+  };
+  roi: {
+    in_house: number[];
+    iaas: number[];
+  };
+};
+
 export default function ApplicationFormPage() {
   const { userId } = useParams();
   if (!userId) {
@@ -112,7 +129,7 @@ export default function ApplicationFormPage() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const [successModalOpen, setSuccessModalOpen] = useState(false);
-  const [roiData, setRoiData] = useState<any>(null);
+  const [roiData, setRoiData] = useState<ROIResults | null>(null);
   const [roiInputs, setRoiInputs] = useState<any>(null);
   // const [consented, setConsented] = useState(true);
   const { isAuthenticated, user } = useUser();
@@ -210,7 +227,7 @@ export default function ApplicationFormPage() {
     setActiveStep((prevStep) => prevStep - 1);
   };
 
-  const handleRoiData = (data: any, inputs: any) => {
+  const handleRoiData = (data: ROIResults, inputs: any) => {
     console.log('ROI data received:', data);
     console.log('ROI inputs received:', inputs);
     setRoiData(data);
@@ -261,7 +278,7 @@ export default function ApplicationFormPage() {
   const formatChartData = () => {
     if (!roiData) return [];
     
-    return roiData.years.map((year, index) => ({
+    return roiData.years.map((year: number, index: number) => ({
       year: `Year ${year}`,
       income: roiData.incomes[index],
       inHouseCost: roiData.costs.in_house[index],
@@ -273,7 +290,7 @@ export default function ApplicationFormPage() {
     }));
   };
 
-  const formatCurrency = (amount) => {
+  const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
@@ -475,7 +492,7 @@ export default function ApplicationFormPage() {
                           <Box>
                             <Typography variant="h6">Total Savings (IaaS)</Typography>
                             <Typography variant="h4" fontWeight="bold">
-                              {formatCurrency(roiData.net.iaas.reduce((sum, val) => sum + val, 0)).replace('$', '')}
+                              {formatCurrency(roiData.net.iaas.reduce((sum: number, val: number) => sum + val, 0)).replace('$', '')}
                             </Typography>
                           </Box>
                         </Stack>
@@ -498,7 +515,7 @@ export default function ApplicationFormPage() {
                           <Box>
                             <Typography variant="h6">Average ROI (IaaS)</Typography>
                             <Typography variant="h4" fontWeight="bold">
-                              {(roiData.roi.iaas.reduce((sum, val) => sum + val, 0) / roiData.roi.iaas.length).toFixed(1)}%
+                              {(roiData.roi.iaas.reduce((sum: number, val: number) => sum + val, 0) / roiData.roi.iaas.length).toFixed(1)}%
                             </Typography>
                           </Box>
                         </Stack>

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import Snackbar from '@mui/material/Snackbar';
 import MuiAlert from '@mui/material/Alert';
-import IconButton from '@mui/material/IconButton';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../components/UserContext';
 import {
@@ -38,7 +37,7 @@ const countryOptions = [
 ];
 
 const RegisterPage = () => {
-  const { isAuthenticated, login, register } = useUser();
+  const { login, register } = useUser();
   const navigate = useNavigate();
   const [isRegister, setIsRegister] = useState(true);
   const [error, setError] = useState('');

@@ -4,8 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { useUser } from '../components/UserContext';
 import { 
   Button, 
-  AppBar, 
-  Toolbar, 
   Typography, 
   Box, 
   Container,
@@ -18,7 +16,6 @@ import {
   TrendingUp as TrendingUpIcon,
   Speed as SpeedIcon,
   Security as SecurityIcon,
-  Padding
 } from '@mui/icons-material';
 
 import Navbar from '../components/Navbar';
@@ -41,14 +38,6 @@ const HomePage = () => {
     } else {
       navigate(path);
     }
-  };
-
-  const goToRegister = () => {
-    navigate('/register');
-  };
-
-  const goToLogin = () => {
-    navigate('/login');
   };
 
   return (

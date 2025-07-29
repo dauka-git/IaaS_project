@@ -24,8 +24,7 @@ import {
   ArrowBack as ArrowBackIcon,
   Business as BusinessIcon,
   CreditCard as CreditCardIcon,
-  TrendingUp as TrendingUpIcon,
-  Schedule as ScheduleIcon
+  TrendingUp as TrendingUpIcon
 } from '@mui/icons-material';
 import { iaasAPI } from '../utils/api';
 import Navbar from '../components/Navbar';

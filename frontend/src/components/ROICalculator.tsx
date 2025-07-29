@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
@@ -27,7 +26,6 @@ import {
   ToggleButtonGroup,
   IconButton,
   Stack,
-  Avatar,
   Divider
 } from '@mui/material';
 import {
@@ -53,18 +51,52 @@ const mastercardColors = {
   white: '#FFFFFF'
 };
 
-interface ROICalculatorProps {
-  onCalculate?: (results: any, inputs: any) => void;
+interface ROIResults {
+  years: number[];
+  incomes: number[];
+  costs: {
+    in_house: number[];
+    iaas: number[];
+  };
+  net: {
+    in_house: number[];
+    iaas: number[];
+  };
+  roi: {
+    in_house: number[];
+    iaas: number[];
+  };
 }
 
+interface ROICalculatorProps {
+  onCalculate?: (results: ROIResults, inputs: any) => void;
+}
+
+type CalculationType = 'auto' | 'manual';
+
+type AutoFormData = {
+  years: number;
+  cards_number: number;
+  cardType: string;
+  features: string[];
+  starting_number: number;
+  expected_cards_growth_rate: number;
+};
+
+type ManualFormData = {
+  cardType: string;
+  features: string[];
+  explicit_cards_number: { [year: number]: number };
+};
+
 const ROICalculator: React.FC<ROICalculatorProps> = ({ onCalculate }) => {
-  const [calculationType, setCalculationType] = useState('auto');
+  const [calculationType, setCalculationType] = useState<CalculationType>('auto');
   const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState(null);
+  const [results, setResults] = useState<ROIResults | null>(null);
   const [error, setError] = useState('');
 
   // Auto ROI form data
-  const [autoFormData, setAutoFormData] = useState({
+  const [autoFormData, setAutoFormData] = useState<AutoFormData>({
     years: 3,
     cards_number: 50000,
     cardType: 'Virtual',
@@ -74,7 +106,7 @@ const ROICalculator: React.FC<ROICalculatorProps> = ({ onCalculate }) => {
   });
 
   // Manual ROI form data
-  const [manualFormData, setManualFormData] = useState({
+  const [manualFormData, setManualFormData] = useState<ManualFormData>({
     cardType: 'Virtual',
     features: [],
     explicit_cards_number: {
@@ -87,21 +119,21 @@ const ROICalculator: React.FC<ROICalculatorProps> = ({ onCalculate }) => {
   const cardTypes = ['Virtual', 'Physical', 'Both'];
   const availableFeatures = ['Rewards', 'FX', 'Corporate Controls', 'Analytics', 'API Integration', 'Custom Branding'];
 
-  const handleAutoInputChange = (field, value) => {
+  const handleAutoInputChange = (field: keyof AutoFormData, value: any) => {
     setAutoFormData(prev => ({
       ...prev,
       [field]: value
     }));
   };
 
-  const handleManualInputChange = (field, value) => {
+  const handleManualInputChange = (field: keyof ManualFormData, value: any) => {
     setManualFormData(prev => ({
       ...prev,
       [field]: value
     }));
   };
 
-  const handleManualCardsChange = (year, value) => {
+  const handleManualCardsChange = (year: number, value: string) => {
     setManualFormData(prev => ({
       ...prev,
       explicit_cards_number: {
@@ -114,10 +146,10 @@ const ROICalculator: React.FC<ROICalculatorProps> = ({ onCalculate }) => {
   const addManualYear = () => {
     const years = Object.keys(manualFormData.explicit_cards_number).map(Number);
     const nextYear = Math.max(...years) + 1;
-    handleManualCardsChange(nextYear, 0);
+    handleManualCardsChange(nextYear, '0');
   };
 
-  const removeManualYear = (year) => {
+  const removeManualYear = (year: number) => {
     const newCardsNumber = { ...manualFormData.explicit_cards_number };
     delete newCardsNumber[year];
     setManualFormData(prev => ({
@@ -126,14 +158,12 @@ const ROICalculator: React.FC<ROICalculatorProps> = ({ onCalculate }) => {
     }));
   };
 
-  const toggleFeature = (feature, isAuto = true) => {
-    const formData = isAuto ? autoFormData : manualFormData;
+  const toggleFeature = (feature: string, isAuto: boolean = true) => {
     const setFormData = isAuto ? setAutoFormData : setManualFormData;
-    
     setFormData(prev => ({
       ...prev,
       features: prev.features.includes(feature)
-        ? prev.features.filter(f => f !== feature)
+        ? prev.features.filter((f: string) => f !== feature)
         : [...prev.features, feature]
     }));
   };
@@ -144,15 +174,11 @@ const ROICalculator: React.FC<ROICalculatorProps> = ({ onCalculate }) => {
     setResults(null);
 
     try {
-      // Use relative URLs instead of absolute localhost URLs
-      const endpoint = calculationType === 'auto' 
+      const endpoint = calculationType === 'auto'
         ? '/api/roi/auto'
         : '/api/roi/manual';
-      
-      const payload = calculationType === 'auto' ? autoFormData : manualFormData;
 
-      console.log('Sending ROI calculation request to:', endpoint);
-      console.log('Request payload:', JSON.stringify(payload, null, 2));
+      const payload = calculationType === 'auto' ? autoFormData : manualFormData;
 
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -162,44 +188,30 @@ const ROICalculator: React.FC<ROICalculatorProps> = ({ onCalculate }) => {
         body: JSON.stringify(payload),
       });
 
-      console.log('Received response, status:', response.status);
-
       const contentType = response.headers.get('content-type');
-      console.log('Content-Type header:', contentType);
-
       if (!contentType || !contentType.includes('application/json')) {
-        const textResponse = await response.text();
-        console.error('Non-JSON response received:', textResponse.substring(0, 200));
         throw new Error('Server returned non-JSON response');
       }
 
       const data = await response.json();
-      console.log('Parsed JSON response:', data);
-
       if (!response.ok) {
         throw new Error(data.error || 'Failed to calculate ROI');
       }
 
       setResults(data.roiData);
-
       if (onCalculate) {
         onCalculate(data.roiData, payload);
-        console.log('Calling onCalculate with results and inputs');
       }
-
-    } catch (err) {
-      console.error('ROI calculation error:', err);
+    } catch (err: any) {
       setError(err.message);
     } finally {
-      console.log('Calculation complete');
       setLoading(false);
     }
   };
 
   const formatChartData = () => {
     if (!results) return [];
-    
-    return results.years.map((year, index) => ({
+    return results.years.map((year: number, index: number) => ({
       year: `Year ${year}`,
       income: results.incomes[index],
       inHouseCost: results.costs.in_house[index],
@@ -211,7 +223,7 @@ const ROICalculator: React.FC<ROICalculatorProps> = ({ onCalculate }) => {
     }));
   };
 
-  const formatCurrency = (amount) => {
+  const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
@@ -238,7 +250,7 @@ const ROICalculator: React.FC<ROICalculatorProps> = ({ onCalculate }) => {
               <ToggleButtonGroup
                 value={calculationType}
                 exclusive
-                onChange={(e, value) => value && setCalculationType(value)}
+                onChange={(e, value) => value && setCalculationType(value as CalculationType)}
                 fullWidth
                 sx={{ mb: 3 }}
               >
@@ -384,7 +396,7 @@ const ROICalculator: React.FC<ROICalculatorProps> = ({ onCalculate }) => {
                     <Select
                       value={autoFormData.cardType}
                       label="Card Type"
-                      onChange={(e) => handleAutoInputChange('cardType', e.target.value)}
+                      onChange={(e) => handleAutoInputChange('cardType', e.target.value as string)}
                       sx={{
                         '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                           borderColor: mastercardColors.red,
@@ -418,7 +430,7 @@ const ROICalculator: React.FC<ROICalculatorProps> = ({ onCalculate }) => {
                       <Select
                         value={manualFormData.cardType}
                         label="Card Type"
-                        onChange={(e) => handleManualInputChange('cardType', e.target.value)}
+                        onChange={(e) => handleManualInputChange('cardType', e.target.value as string)}
                         sx={{
                           '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                             borderColor: mastercardColors.orange,

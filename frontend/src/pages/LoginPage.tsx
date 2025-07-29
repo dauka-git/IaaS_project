@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useUser } from '../components/UserContext';
 import Snackbar from '@mui/material/Snackbar';
 import MuiAlert from '@mui/material/Alert';
-import IconButton from '@mui/material/IconButton';
 import {
   Button,
   Box,
@@ -26,9 +25,6 @@ const LoginPage = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-
-  const [redirectTimer, setRedirectTimer] = useState<NodeJS.Timeout | null>(null);
-
 
 
   // useEffect(() => {
@@ -82,7 +78,6 @@ const LoginPage = () => {
       const timer = setTimeout(() => {
         navigate('/'); // Redirect to homepage
       }, 2000);
-      setRedirectTimer(timer);
 
     } catch (err: any) {
       setError(err.response?.data?.message || err.message || 'Login failed');

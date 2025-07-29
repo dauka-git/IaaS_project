@@ -20,8 +20,7 @@ import {
   TableHead,
   TableRow,
   CircularProgress,
-  Alert,
-  Divider
+  Alert
 } from '@mui/material';
 import { Add as AddIcon, Visibility as ViewIcon, AccountCircle as AccIcon } from '@mui/icons-material';
 import { iaasAPI, authAPI } from '../utils/api';
