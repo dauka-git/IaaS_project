@@ -132,11 +132,9 @@ export default function ApplicationFormPage() {
   const [roiData, setRoiData] = useState<ROIResults | null>(null);
   const [roiInputs, setRoiInputs] = useState<any>(null);
   // const [consented, setConsented] = useState(true);
-  const { isAuthenticated, user } = useUser();
+  const { user } = useUser();
   
   
-  const effectiveUserId = userId || user?._id;
-
   const formik = useFormik({
     initialValues: {
       company: {
@@ -565,7 +563,7 @@ export default function ApplicationFormPage() {
                               stroke={mastercardColors.gray}
                             />
                             <Tooltip 
-                              formatter={(value) => formatCurrency(value)}
+                              formatter={(value) => typeof value === 'number' ? formatCurrency(value) : value}
                               contentStyle={{
                                 backgroundColor: mastercardColors.white,
                                 border: `2px solid ${mastercardColors.lightGray}`,
@@ -597,7 +595,7 @@ export default function ApplicationFormPage() {
                               stroke={mastercardColors.gray}
                             />
                             <Tooltip 
-                              formatter={(value) => formatCurrency(value)}
+                              formatter={(value) => typeof value === 'number' ? formatCurrency(value) : value}
                               contentStyle={{
                                 backgroundColor: mastercardColors.white,
                                 border: `2px solid ${mastercardColors.lightGray}`,

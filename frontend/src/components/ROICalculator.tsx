@@ -673,7 +673,7 @@ const ROICalculator: React.FC<ROICalculatorProps> = ({ onCalculate }) => {
                           stroke={mastercardColors.gray}
                         />
                         <Tooltip 
-                          formatter={(value) => formatCurrency(value)}
+                          formatter={(value) => typeof value === 'number' ? formatCurrency(value) : value}
                           contentStyle={{
                             backgroundColor: mastercardColors.white,
                             border: `2px solid ${mastercardColors.lightGray}`,
@@ -705,7 +705,7 @@ const ROICalculator: React.FC<ROICalculatorProps> = ({ onCalculate }) => {
                           stroke={mastercardColors.gray}
                         />
                         <Tooltip 
-                          formatter={(value) => formatCurrency(value)}
+                          formatter={(value) => typeof value === 'number' ? formatCurrency(value) : value}
                           contentStyle={{
                             backgroundColor: mastercardColors.white,
                             border: `2px solid ${mastercardColors.lightGray}`,
