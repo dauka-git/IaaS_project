@@ -3,6 +3,9 @@ from pydantic import BaseModel
 from typing import Any, Dict
 import numpy as np
 from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
+import os
+load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
 app = FastAPI()
 

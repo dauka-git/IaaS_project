@@ -6,7 +6,7 @@ import { User, IaaSApplication, ROIData, AuthResponse, PaginatedResponse, AutoRO
 
 // const API_BASE_URL = 'https://iaas-project-server.onrender.com';
 
-const API_BASE_URL = 'http://localhost:5000'
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
 
 // Create axios instance
 const api = axios.create({
