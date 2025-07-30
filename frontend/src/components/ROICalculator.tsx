@@ -40,6 +40,8 @@ import {
 } from '@mui/icons-material';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
 
+import { roiAPI } from '../utils/api';
+
 // Mastercard color palette
 const mastercardColors = {
   red: '#EB001B',
@@ -176,42 +178,41 @@ const ROICalculator: React.FC<ROICalculatorProps> = ({ onCalculate }) => {
     }
   };
 
-  const calculateROI = async () => {
+   const calculateROI = async () => {
     setLoading(true);
     setError('');
     setResults(null);
 
     try {
-      const endpoint = calculationType === 'auto'
-        ? '/api/roi/auto'
-        : '/api/roi/manual';
-
-      const payload = calculationType === 'auto' ? autoFormData : manualFormData;
-
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        throw new Error('Server returned non-JSON response');
+      let response;
+      
+      if (calculationType === 'auto') {
+        // Use the roiAPI.calculateAutoROI method
+        response = await roiAPI.calculateAutoROI(autoFormData);
+      } else {
+        // Use the roiAPI.calculateManualROI method
+        response = await roiAPI.calculateManualROI(manualFormData);
       }
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to calculate ROI');
-      }
-
-      setResults(data.roiData);
+      setResults(response.roiData);
       if (onCalculate) {
-        onCalculate(data.roiData, payload);
+        onCalculate(response.roiData, calculationType === 'auto' ? autoFormData : manualFormData);
       }
     } catch (err: any) {
-      setError(err.message);
+      console.error('ROI Calculation Error:', err);
+      
+      // Handle different types of errors
+      let errorMessage = 'Failed to calculate ROI';
+      
+      if (err.response?.data?.error) {
+        errorMessage = err.response.data.error;
+      } else if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
