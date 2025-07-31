@@ -533,23 +533,34 @@ const ProfilePage = () => {
                         </>
                       )}
                       {/* Find your partner block */}
-                      <Box mt={4} p={2} bgcolor="#f5f5f5" borderRadius={2} boxShadow={1} display={'flex'} justifyContent={'center'}>
-                        <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                          Find your partner
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" gutterBottom>
-                          Discover Mastercard Engage partners in Kazakhstan:
-                        </Typography>
-                        <Button
-                          variant="outlined"
-                          color="primary"
-                          href="https://engagepartners.mastercard.com/English/directory/search?f0=Eastern+Europe%2C+Middle+East+and+Africa&f0v0=Eastern+Europe%2C+Middle+East+and+Africa&f0v1=Kazakhstan&length=48"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          size="small"
-                        >
-                          Go to Engage Directory
-                        </Button>
+                      <Box
+                        mt={4}
+                        p={2}
+                        bgcolor="#f5f5f5"
+                        borderRadius={2}
+                        boxShadow={1}
+                        width="100%"
+                        display="flex"
+                        justifyContent="center"
+                      >
+                        <Box textAlign="center">
+                          <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                            Find your partner
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" gutterBottom>
+                            Discover Mastercard Engage partners in Kazakhstan:
+                          </Typography>
+                          <Button
+                            variant="outlined"
+                            color="primary"
+                            href="https://engagepartners.mastercard.com/English/directory/search?f0=Eastern+Europe%2C+Middle+East+and+Africa&f0v0=Eastern+Europe%2C+Middle+East+and+Africa&f0v1=Kazakhstan&length=48"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            size="small"
+                          >
+                            Go to Engage Directory
+                          </Button>
+                        </Box>
                       </Box>
                     </Grid>
                   </Grid>
