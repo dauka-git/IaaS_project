@@ -533,7 +533,7 @@ const ProfilePage = () => {
                         </>
                       )}
                       {/* Find your partner block */}
-                      <Box mt={4} p={2} bgcolor="#f5f5f5" borderRadius={2} boxShadow={1}>
+                      <Box mt={4} p={2} bgcolor="#f5f5f5" borderRadius={2} boxShadow={1} display={'flex'} justifyContent={'center'}>
                         <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
                           Find your partner
                         </Typography>
