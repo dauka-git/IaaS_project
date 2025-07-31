@@ -503,42 +503,55 @@ const ProfilePage = () => {
                 
                 <Box width="100%">
                   <Grid container spacing={2}>
-                    <Grid item xs={12}>
+                    {/* Left column: Name and Email */}
+                    <Grid item xs={12} sm={6}>
                       <Typography variant="body2" color="text.secondary">Name</Typography>
                       <Typography variant="body1" sx={{ mb: 2 }}>
                         {profile.firstName} {profile.lastName}
                       </Typography>
-                    </Grid>
-                    <Grid item xs={12}>
                       <Typography variant="body2" color="text.secondary">Email</Typography>
                       <Typography variant="body1" sx={{ mb: 2 }}>
                         {profile.email}
                       </Typography>
                     </Grid>
-                    {profile.company && (
-                      <Grid item xs={12}>
-                        <Typography variant="body2" color="text.secondary">Company</Typography>
-                        <Typography variant="body1" sx={{ mb: 2 }}>
-                          {profile.company}
+                    {/* Right column: Company and Phone */}
+                    <Grid item xs={12} sm={6}>
+                      {profile.company && (
+                        <>
+                          <Typography variant="body2" color="text.secondary">Company</Typography>
+                          <Typography variant="body1" sx={{ mb: 2 }}>
+                            {profile.company}
+                          </Typography>
+                        </>
+                      )}
+                      {profile.phone && (
+                        <>
+                          <Typography variant="body2" color="text.secondary">Phone</Typography>
+                          <Typography variant="body1" sx={{ mb: 2 }}>
+                            {profile.phone}
+                          </Typography>
+                        </>
+                      )}
+                      {/* Find your partner block */}
+                      <Box mt={4} p={2} bgcolor="#f5f5f5" borderRadius={2} boxShadow={1}>
+                        <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                          Find your partner
                         </Typography>
-                      </Grid>
-                    )}
-                    {profile.bin && (
-                      <Grid item xs={12}>
-                        <Typography variant="body2" color="text.secondary">BIN</Typography>
-                        <Typography variant="body1" sx={{ mb: 2 }}>
-                          {profile.bin}
+                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                          Discover Mastercard Engage partners in Kazakhstan:
                         </Typography>
-                      </Grid>
-                    )}
-                    {profile.phone && (
-                      <Grid item xs={12}>
-                        <Typography variant="body2" color="text.secondary">Phone</Typography>
-                        <Typography variant="body1" sx={{ mb: 2 }}>
-                          {profile.phone}
-                        </Typography>
-                      </Grid>
-                    )}
+                        <Button
+                          variant="outlined"
+                          color="primary"
+                          href="https://engagepartners.mastercard.com/English/directory/search?f0=Eastern+Europe%2C+Middle+East+and+Africa&f0v0=Eastern+Europe%2C+Middle+East+and+Africa&f0v1=Kazakhstan&length=48"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          size="small"
+                        >
+                          Go to Engage Directory
+                        </Button>
+                      </Box>
+                    </Grid>
                   </Grid>
                 </Box>
               </Box>
